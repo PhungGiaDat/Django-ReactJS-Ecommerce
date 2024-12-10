@@ -1,0 +1,10 @@
+body {
+    margin: 0; /* Loại bỏ margin mặc định */
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Chiều cao tối thiểu của màn hình */
+    background-color: #f5f5f5; /* Màu nền để thấy rõ box-shadow */
+    overflow: hidden; /* Ngăn overflow từ box-shadow */
+}
