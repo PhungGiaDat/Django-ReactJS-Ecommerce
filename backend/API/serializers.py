@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 from product.models import Product, Categories
 
+''' API dùng khi đăng ký tài khoản user'''
 class UserSerializer(serializers.ModelSerializer):
     class Meta: 
         model = User
@@ -15,7 +16,8 @@ class UserSerializer(serializers.ModelSerializer):
         Token.objects.create(user=user)
         return user
     
-class AdminUseSerializer(serializers.ModelSerializer):
+''' API dùng khi đăng ký tài khoản admin'''
+class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id','username','email','is_staff','is_superuser','date_joined']
@@ -38,6 +40,7 @@ class AdminUseSerializer(serializers.ModelSerializer):
         
         return instance
     
+''' API dùng khi đăng nhập''' 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
