@@ -19,16 +19,16 @@ class Categories(models.Model):
 
 class Product(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255,unique=True) 
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE,related_name="created_by_user")
-    updated_by = models.ForeignKey(User, on_delete=models.CASCADE,related_name="updated_by_user")
-    categories = models.ForeignKey(Categories,on_delete=models.CASCADE,related_name="categories")
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="created_by_user")
+    updated_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="updated_by_user")
+    categories = models.ForeignKey(Categories,on_delete=models.CASCADE,related_name="products")
     
     class Meta:
         ordering = ['created_at']   
@@ -40,16 +40,13 @@ class Product(models.Model):
         return reverse("_detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
-        ''' Auto create slug when create product '''
         if not self.slug:
-            self.slug = slugify(self.name)
-            unique_slug = self.slug
-            counter = 1 
-            # Kiểm tra và tạo slug duy nhất
+            base_slug = slugify(self.name)
+            unique_slug = base_slug
+            counter = 1
             while Product.objects.filter(slug=unique_slug).exists():
-                unique_slug = '{}-{}'.format(self.slug, counter)
+                unique_slug = f"{base_slug}-{counter}"
                 counter += 1
-            self.slug = unique_slug     
-
-        super(Product, self).save(*args, **kwargs)
+            self.slug = unique_slug
+        super().save(*args, **kwargs)
 

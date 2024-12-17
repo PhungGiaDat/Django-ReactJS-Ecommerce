@@ -41,11 +41,14 @@ class AdminUserSerializer(serializers.ModelSerializer):
         return instance
     
 ''' API dùng khi đăng nhập''' 
+''' API của bảng Product'''
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'created_at', 'updated_at', 'image', 'created_by', 'updated_by', 'categories']
+        fields = ['id', 'name', 'description', 'slug','price', 'created_at', 'updated_at', 
+                  'image', 'created_by', 'updated_by', 'categories']
         extra_kwargs = {'created_by': {'read_only': True}, 'updated_by': {'read_only': True}}
+        
         
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:

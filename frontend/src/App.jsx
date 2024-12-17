@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import RegisterComponents from './pages/Register';
 import NotFound from './pages/NotFound';
+import Admin from './pages/Admin';
 import React from 'react';
 
 
@@ -33,7 +34,7 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<RegisterComponents />} />
         <Route path='*' element={<NotFound />} />
-
+        <Route path='/admin' element={<Admin />} />
       </Routes>
     </BrowserRouter>
   );

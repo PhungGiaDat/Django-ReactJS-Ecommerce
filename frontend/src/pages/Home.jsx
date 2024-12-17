@@ -6,6 +6,12 @@ function Home() {
         <>
             <Navbars />
             <div>Home</div>
+
+            <div className="container">
+                <div className="product">
+                    <h1>Product</h1>
+                </div>
+            </div>
         </>
     );
 }

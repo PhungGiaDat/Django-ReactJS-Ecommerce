@@ -11,10 +11,16 @@ class BaseUserOwnedView(generics.GenericAPIView):
         return self.queryset.filter(created_by=self.request.user)
 
     def perform_create(self, serializer):
+        ''' Hàm thực hiện việc tạo mới một object
+        Bắt buộc phải đăng nhập để có thể lấy về thông tin của user'''
         if serializer.is_valid():
             serializer.save(created_by=self.request.user, updated_by=self.request.user)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not self.request.user.is_authenticated:
+            raise serializers.ValidationError({'error': 'You do not have permission to create this object'})
+        serializer.save(created_by=self.request.user,updated_by=self.request.user)
 
     def perform_update(self, serializer):
         serializer.save(updated_by=self.request.user)
