@@ -37,7 +37,7 @@ class Product_List_View(BaseUserOwnedView,generics.ListAPIView):
 
 
 class Product_Public_List_View(generics.ListAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().order_by('-created_at')
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
 
