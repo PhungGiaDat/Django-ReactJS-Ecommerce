@@ -29,9 +29,6 @@ class Product(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="created_by_user")
     updated_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="updated_by_user")
     categories = models.ForeignKey(Categories,on_delete=models.CASCADE,related_name="products")
-    
-    class Meta:
-        ordering = ['created_at']   
 
     def __str__(self):
         return self.name
@@ -49,4 +46,10 @@ class Product(models.Model):
                 counter += 1
             self.slug = unique_slug
         super().save(*args, **kwargs)
+
+    product_limit = 5
+    def get_related_products(self,limit=product_limit):
+        return Product.objects.filter(categories=self.categories).exclude(id=self.id)[:limit]
+
+
 
