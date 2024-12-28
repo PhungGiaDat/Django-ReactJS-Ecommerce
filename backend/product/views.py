@@ -34,4 +34,14 @@ class Product_Update(BaseUserOwnedView,generics.RetrieveUpdateAPIView):
 class Product_List_View(BaseUserOwnedView,generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    
+
+
+class Product_Public_List_View(generics.ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
+
+
+
+
+
