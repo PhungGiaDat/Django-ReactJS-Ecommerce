@@ -1,0 +1,67 @@
+/* Home.css */
+.container {
+    margin: 20px auto;
+    padding: 20px;
+    max-width: 1200px;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 20px;
+    border-radius: 10px; /* Tạo góc bo tròn cho hình ảnh */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Thêm bóng đổ cho hình ảnh */
+}
+
+.product, .about-us, .contact {
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: #f9f9f9; /* Màu nền nhẹ cho các phần tử */
+    border-radius: 10px; /* Tạo góc bo tròn cho các phần tử */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Thêm bóng đổ cho các phần tử */
+}
+
+.product:hover, .sale:hover, .about-us:hover, .contact:hover { 
+    background-color: #e0e0e0; /* Thay đổi màu nền khi lia chuột qua */ 
+    transform: scale(1.05); /* Tăng kích thước khi lia chuột qua */ 
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Thêm bóng đổ khi lia chuột qua */ 
+} 
+
+.product:active, .sale:active, .about-us:active, .contact:active { 
+    background-color: #d0d0d0; /* Thay đổi màu nền khi bấm vào */ 
+    transform: scale(0.95); /* Giảm kích thước khi bấm vào */ 
+}
+
+h1, h3 {
+    text-align: center; 
+    margin: 0; /* Xóa bỏ khoảng cách giữa các phần tử */ 
+    padding: 10px; /* Thêm khoảng cách bên trong */ 
+    transition: color 0.3s ease; /* Thêm hiệu ứng chuyển đổi màu sắc */
+}
+
+h1:hover, h3:hover { 
+    color: #ff6347; /* Thay đổi màu chữ khi lia chuột qua */ 
+}
+
+.image-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.image-container img {
+    width: 48%; /* Chia đều không gian cho hai hình ảnh */
+}
+
+.product{
+    background-color: cornflowerblue;
+}
+
+.about-us{
+    background-color: chartreuse;
+}
+
+.contact{
+    background-color: darkgray;
+}

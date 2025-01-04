@@ -1,0 +1,13 @@
+.navbar-nav{
+    font-size: 1.8rem;
+    color: #fff;
+    margin-left: 4rem;
+    font-weight: 500;
+    transition: 0.3s ease-in-out;
+    border-bottom: 3px solid transparent;
+}
+
+.navbar-nav a:hover, .navbar-nav a.active{
+    color: aquamarine;
+    border-bottom: 3px solid aquamarine;
+}

@@ -1,0 +1,89 @@
+/* Tạo container cho mỗi dòng */
+.container {
+    display: flex;
+    justify-content: space-between; /* Phân chia khoảng cách đều */
+    gap: 20px; /* Khoảng cách giữa các phần tử trong dòng */
+    margin-bottom: 50px; /* Khoảng cách giữa các dòng */
+  }
+  
+  /* Định nghĩa chung cho các phần tử */
+.product, .sale, .about-us, .contact {
+    flex: 1; /* Các phần tử có kích thước bằng nhau */
+    padding: 20px;
+    text-align: center;
+    min-height: 250px; /* Tăng chiều cao */
+    border-radius: 10px; /* Bo góc nhẹ */
+    border: 2px solid black; /* Viền đen cho các khung */
+    overflow: hidden; /* Ẩn nội dung thừa */
+    position: relative; /* Giúp quản lý background ảnh */
+    background-size: cover; /* Ảnh phủ toàn bộ khung */
+    background-position: center; /* Ảnh căn giữa */
+    margin-top: 20px;
+  }
+  
+  /* Tùy chỉnh từng phần tử */
+  .product {
+    background-image: url(./images/giaydabanh.jpg);
+  }
+  
+  .sale {
+    background: cyan;
+  }
+  
+  .about-us {
+    background: lightgreen;
+  }
+  
+  .contact {
+    background: lightblue;
+  }
+
+  -----------------------------------------------------------------------------
+  .product{
+    background-color: chocolate;
+}
+
+.product h1{
+    color: aqua;
+    background-color: bisque;
+    transition: 0.3s ease-in-out;
+    border-bottom: 3px solid transparent;
+}
+
+.product h1 a:hover, .product h1 a:active{
+    color: aquamarine;
+    border-bottom: 3px solid aquamarine;
+}
+
+.product h3{
+    color: aquamarine;
+    background-color: black;
+}
+
+.about-us{
+    background-color: cadetblue;
+}
+
+.about-us h1{
+    color: aqua;
+    background-color: beige;
+}
+
+.about-us h3{
+    color: aquamarine;
+    background-color: black;
+}
+
+.contact{
+    background-color: cornflowerblue;
+}
+
+.contact h1{
+    color: aqua;
+    background-color: beige;
+}
+
+.contact h3{
+    color: aquamarine;
+    background-color: black;
+}
