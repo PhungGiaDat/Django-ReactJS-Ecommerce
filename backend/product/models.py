@@ -27,7 +27,7 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="created_by_user")
-    updated_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="updated_by_user")
+    updated_by = models.ForeignKey(User, on_delete=models.PROTECcleT,related_name="updated_by_user")
     categories = models.ForeignKey(Categories,on_delete=models.CASCADE,related_name="products")
 
     def __str__(self):
