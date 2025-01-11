@@ -2,6 +2,7 @@ from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from django.contrib.humanize.templatetags.humanize import intcomma
 # Create your models here.
 
 class Categories(models.Model):
@@ -27,7 +28,7 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="created_by_user")
-    updated_by = models.ForeignKey(User, on_delete=models.PROTECcleT,related_name="updated_by_user")
+    updated_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="updated_by_user")
     categories = models.ForeignKey(Categories,on_delete=models.CASCADE,related_name="products")
 
     def __str__(self):
@@ -46,6 +47,9 @@ class Product(models.Model):
                 counter += 1
             self.slug = unique_slug
         super().save(*args, **kwargs)
+
+    def formatted_price(self):
+        return f"{intcomma(self.price):,} VNĐ"
 
     product_limit = 5
     def get_related_products(self,limit=product_limit):

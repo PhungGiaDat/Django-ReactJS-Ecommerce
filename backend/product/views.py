@@ -7,6 +7,12 @@ from rest_framework import status
 from rest_framework.response import Response
 from core.views import BaseUserOwnedView
 
+
+
+class Categoris_Public_List_View(generics.ListAPIView):
+    queryset = Categories.objects.all()
+    serializer_class = CategoriesSerializer
+    permission_classes = [AllowAny]
 class Categories_List_Create(BaseUserOwnedView,generics.ListCreateAPIView):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
