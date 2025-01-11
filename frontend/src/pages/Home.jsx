@@ -5,6 +5,7 @@ import Sale from '../components/Sale';
 import Introduction from '../components/Introduction';
 import Product from '../components/Product';
 import Footer from '../components/Footer';
+import Clothes from '../components/Clothes';
 function Home() {
     return (
         <>
@@ -13,6 +14,7 @@ function Home() {
             <Sale />
             <Introduction />
             <Product />
+            <Clothes />
             <Footer />
         </>
     );

@@ -1,9 +1,28 @@
-import React from 'react';
+import {React,useEffect,useState} from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faShoppingCart } from "@fortawesome/free-solid-svg-icons"; 
-
+import api from '../publicAPI';
 
 function Navbars(){
+    const [categories, setCategories] = useState([]);
+
+    useEffect(() => {
+        api.get("/api/products/categories/public")
+            .then(res => {
+                console.log(res.data);
+                setCategories(res.data);
+            })
+            .catch(err => {
+                console.log(err.message);
+            });
+    } , []);
+
+
+    // lọc dữ liệu từ API 
+
+    const UniqueCategories = categories.filter((category, index, self) => index === self.findIndex(cate => cate.ID === category.ID));
+
+
     return (
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
             <div class="container-fluid">
@@ -19,16 +38,27 @@ function Navbars(){
                         <li class="nav-item">
                             <a class="nav-link" href="#">GIỚI THIỆU</a>
                         </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            SẢN PHẨM
+                        <li className="nav-item dropdown">
+                            <a
+                                className="nav-link dropdown-toggle"
+                                href="#"
+                                role="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                SẢN PHẨM
                             </a>
-                            <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">Action</a></li>
-                            <li><a class="dropdown-item" href="#">Another action</a></li>
-                            <li><a class="dropdown-item" href="#">Something else here</a></li>
+                            <ul className="dropdown-menu">
+                                {UniqueCategories.map((category) => (
+                                    <li key={category.ID}>
+                                        <a className="dropdown-item" href="#">
+                                        {category.name}
+                                        </a>
+                                    </li>
+                                ))}
                             </ul>
-                        </li><i class="fa fa-xing" aria-hidden="true"></i>
+                        </li>
+                        <i class="fa fa-xing" aria-hidden="true"></i>
 
                         <li className="nav-item">
                             <a href="" className="nav-link">GIỎ HÀNG</a>

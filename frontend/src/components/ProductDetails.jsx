@@ -5,7 +5,6 @@ import '../styles/products.css';
 function Product() {
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
-    const [loading,setLoading] = useState(true);
 
     // Gọi API để lấy dữ liệu
     useEffect(() => {
@@ -15,21 +14,18 @@ function Product() {
                 "Content-Type": "application/json",
             }
         })
-        setLoading(true)
         .then(res => {
             console.log(res.data);
             setProducts(res.data);
-            setLoading(false);
+
             // Lọc các sản phẩm thuộc danh mục "Giày Bóng Đá"
             const filtered = res.data.filter(product => product.categories === "Giày Bóng Đá");
             setFilteredProducts(filtered);
         })
         .catch(err => {
             console.log(err.message);
-            setLoading(false);
         });
     }, []); // Chỉ gọi API một lần khi component mount
-
 
     return (
         <section>
