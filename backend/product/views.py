@@ -1,6 +1,6 @@
 
 from rest_framework import serializers,generics
-from API.serializers import ProductSerializer,CategoriesSerializer
+from API.serializers import ProductSerializer,CategoriesSerializer,DetailedProductSerializer
 from rest_framework.permissions import IsAuthenticated,AllowAny
 from .models import Product,Categories
 from rest_framework import status
@@ -45,6 +45,11 @@ class Product_List_View(BaseUserOwnedView,generics.ListAPIView):
 class Product_Public_List_View(generics.ListAPIView):
     queryset = Product.objects.all().order_by('-created_at')
     serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
+    
+class Product_Public_View(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = DetailedProductSerializer
     permission_classes = [AllowAny]
 
 

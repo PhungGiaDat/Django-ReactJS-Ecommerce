@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         Token.objects.create(user=user)
         return user
-    
+            
 ''' API dùng khi đăng ký tài khoản admin'''
 class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -67,6 +67,27 @@ class ProductSerializer(serializers.ModelSerializer):
         extra_kwargs = {'created_by': {'read_only': True},
                         'updated_by': {'read_only': True},
                         'slug':{'read_only':True}}
+        
+        
+
+class SimilarProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'price', 'image', 'slug']  # Chỉ chọn các trường cần thiết
+
+# API để lấy chi tiết sản phẩm và sản phẩm tương tự 
+class DetailedProductSerializer(serializers.ModelSerializer):
+    similar_products = serializers.SerializerMethodField() # gọi hàm get_similar_products khi api được gọi
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'description', 'slug', 'price', 'created_at', 'updated_at', 
+                  'image', 'created_by', 'updated_by', 'categories', 'sizes', 'quantity', 'similar_products']
+
+    def get_similar_products(self, product):
+        products = Product.objects.filter(categories=product.categories).exclude(id=product.id)[:5]
+        return SimilarProductSerializer(products, many=True).data  # Serialize danh sách
+        
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categories
