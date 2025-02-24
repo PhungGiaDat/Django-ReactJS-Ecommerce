@@ -4,7 +4,6 @@ from product.models import Product
 # Create your models here.
 
 
-<<<<<<< HEAD
 class Cart(models.Model):
     ID = models.AutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -16,28 +15,6 @@ class Cart(models.Model):
 
     def total_price(self):
         return sum(item.product.price * item.quantity for item in self.items.all())
-
-class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)  # Liên kết với model Product
-    quantity = models.PositiveIntegerField(default=1)
-
-    def __str__(self):
-        return f"{self.quantity} x {self.product.name}"
-
-class Order(models.Model):
-    order_id = models.AutoField(primary_key=True)
-    order_date = models.DateTimeField(auto_now_add=True)
-    order_status = models.BooleanField(default=False)
-    order_total = models.DecimalField(max_digits=10, decimal_places=2)
-=======
-
-class Cart(models.Model):
->>>>>>> 632d6622588a4148196ced6c777e8fed2e944b06
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    
-    def __str__(self):
-        return f"Cart of {self.user.username}"
     
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart,on_delete=models.CASCADE)
