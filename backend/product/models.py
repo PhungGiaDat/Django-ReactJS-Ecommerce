@@ -5,6 +5,9 @@ from django.utils.text import slugify
 from django.contrib.humanize.templatetags.humanize import intcomma
 # Create your models here.
 
+
+
+    
 class Categories(models.Model):
     ID = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
@@ -17,24 +20,29 @@ class Categories(models.Model):
 
     def get_absolute_url(self):
         return reverse("_detail", kwargs={"pk": self.pk})
+    
+# 1 product có nhiều size và 1 size thuộc nhiều products
+class Size(models.Model):
+    product_type = models.ForeignKey(Categories, on_delete=models.CASCADE, related_name="sizes")
+    size = models.CharField(max_length=10)  # Lưu cả số (giày) và chữ (áo)
+
+    def __str__(self):
+        return f"{self.size} ({self.product_type.name})"
 
 class Product(models.Model):
+    SHOE_TYPE_CHOICES = [
+        ('TF', 'Turf (Sân cỏ nhân tạo)'),
+        ('IC', 'Indoor (Futsal)'),
+    ]
+    
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255,unique=True) 
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
-    size = models.CharField(max_length=255,default="40")
-    size_choices = [
-        '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50'
-    ]
-    clothes_size_choices = [ 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
-    color = models.CharField(max_length=255,default="black")
-    quantity = models.IntegerField(default=1)    
-    type = models.CharField(max_length=255,default="IC")
     created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="created_by_user")
     updated_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="updated_by_user")
     categories = models.ForeignKey(Categories,on_delete=models.CASCADE,related_name="products")
@@ -65,3 +73,4 @@ class Product(models.Model):
 
 
 
+    

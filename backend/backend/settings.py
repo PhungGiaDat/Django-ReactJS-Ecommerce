@@ -48,6 +48,7 @@ SIMPLE_JWT = {
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -150,7 +151,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
 
 
 # Thư mục nơi collectstatic lưu các static files cuối cùng
@@ -168,8 +169,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
-    "http://localhost:8081",
-    "http://localhost:8082",
     "http://127.0.0.1:8000",
     "http://localhost:3000"
 ]
@@ -191,3 +190,45 @@ CORS_ALLOW_HEADERS = (
     "x-csrftoken",
     "x-requested-with",
 )
+
+
+JAZZMIN_SETTINGS = {
+    "site_title": "E-commerce",
+    "site_header": "E-commerce",
+    "site_brand":"Sport",
+    
+
+     # Welcome text on the login screen
+    "welcome_sign": "Welcome to the ecommerce management system",
+    
+    # List of model admins to search from the search bar, search bar omitted if excluded
+    # If you want to use a single search field you dont need to use a list, you can use a simple string 
+    "search_model": "product.Product",
+    
+       # Links to put along the top menu
+    "topmenu_links": [
+
+        # Url that gets reversed (Permissions can be added)
+        {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
+
+
+        # model admin to link to (Permissions checked against model)
+        {"model": "auth.User"},
+
+        # App with dropdown menu to all its models pages (Permissions checked against models)
+        {"app": "product"},
+    ],
+    
+     # Hide these apps when generating side menu e.g (auth)
+    "hide_apps": ["API"],
+    "hide_models": ["auth.Group","auth.User","authtoken.Token"],
+    
+     "show_sidebar": True,
+    
+}
+
+
+JAZZMIN_UI_TWEAKS = {
+    "theme":"flatly",
+  
+}
