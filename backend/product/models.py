@@ -27,6 +27,14 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
+    size = models.CharField(max_length=255,default="40")
+    size_choices = [
+        '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50'
+    ]
+    clothes_size_choices = [ 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+    color = models.CharField(max_length=255,default="black")
+    quantity = models.IntegerField(default=1)    
+    type = models.CharField(max_length=255,default="IC")
     created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="created_by_user")
     updated_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="updated_by_user")
     categories = models.ForeignKey(Categories,on_delete=models.CASCADE,related_name="products")
