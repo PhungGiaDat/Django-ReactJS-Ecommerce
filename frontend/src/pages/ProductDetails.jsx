@@ -225,7 +225,6 @@ function ProductDetails() {
         </div>
       </div>
     </div>
->>>>>>> b72250ee1bc51678a9ef05be12516c122ea51c8d
   );
 }
 
