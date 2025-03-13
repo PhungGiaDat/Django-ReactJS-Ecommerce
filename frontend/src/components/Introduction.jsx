@@ -1,30 +1,49 @@
 import React from "react";
+import img1 from "../static/image/1.webp";
+import img2 from "../static/image/2.jpg";
+import img3 from "../static/image/3.webp";
+import img4 from "../static/image/4.webp";
+import img5 from "../static/image/5.webp";
+import img6 from "../static/image/6.webp";
+
+function renderImage(feature) {
+  return (
+    <picture>
+      <img
+        src={feature.img}
+        alt={feature.title}
+        className="rounded-circle img-fluid mx-auto"
+        style={{ width: "150px", height: "150px", objectFit: "cover" }}
+      />
+    </picture>
+  );
+}
 
 
 function Introduction() {
   const features = [
     {
-      img: "path_to_image1.jpg", // Đường dẫn ảnh 1
+      img: img1, // Đường dẫn ảnh 1
       title: "Tư vấn bán hàng chuyên nghiệp",
     },
     {
-      img: "path_to_image2.jpg", // Đường dẫn ảnh 2
+      img: img2, // Đường dẫn ảnh 2
       title: "Hỗ trợ khách hàng đo chân chính xác",
     },
     {
-      img: "path_to_image3.jpg", // Đường dẫn ảnh 3
+      img: img3, // Đường dẫn ảnh 3
       title: "Quà tặng khi mua giày (Túi, Vớ, Bình Xịt)",
     },
     {
-      img: "path_to_image4.jpg", // Đường dẫn ảnh 4
+      img: img4, // Đường dẫn ảnh 4
       title: "Thanh toán linh hoạt (Tiền mặt, Thẻ, Chuyển Khoản)",
     },
     {
-      img: "path_to_image5.jpg", // Đường dẫn ảnh 5
+      img: img5, // Đường dẫn ảnh 5
       title: "Giao hàng nhanh chóng đến cho khách hàng",
     },
     {
-      img: "path_to_image6.jpg", // Đường dẫn ảnh 6
+      img: img6, // Đường dẫn ảnh 6
       title: "Chính sách bảo hành/đổi trả",
     },
   ];
@@ -40,12 +59,7 @@ function Introduction() {
           {features.map((feature, index) => (
             <div key={index} className="col-md-4 col-sm-6 mb-4">
               <div className="card border-0">
-                <img
-                  src={feature.img}
-                  alt={feature.title}
-                  className="rounded-circle img-fluid mx-auto"
-                  style={{ width: "150px", height: "150px", objectFit: "cover" }}
-                />
+                {renderImage(feature)}
                 <div className="card-body">
                   <p className="card-text">{feature.title}</p>
                 </div>

@@ -1,45 +1,35 @@
-import React, { useEffect, useState, } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import publicAPI from "../publicAPI";
 import '../styles/products.css';
 
 function Product() {
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
+    const [loading,setLoading] = useState(true);
 
     // Gọi API để lấy dữ liệu
     useEffect(() => {
-        setLoading(true); // Đặt trạng thái loading trước khi gọi API
         publicAPI.get("/api/products/public", {
-                withCredentials: true,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            })
-            .then(res => {
-                console.log(res.data);
-                setProducts(res.data);
-                setLoading(false); // Tắt trạng thái loading sau khi dữ liệu được nhận
-
-                // Lọc các sản phẩm thuộc danh mục "Giày Bóng Đá"
-                const filtered = res.data.filter(
-                    product => product.categories === "Giày Bóng Đá"
-                );
-                setFilteredProducts(filtered);
-            })
-            .catch(err => {
-                console.log(err.message);
-                setLoading(false); // Tắt trạng thái loading khi gặp lỗi
-            });
+            withCredentials: true,
+            headers: {
+                "Content-Type": "application/json",
+            }
+        })
+        setLoading(true)
+        .then(res => {
+            console.log(res.data);
+            setProducts(res.data);
+            setLoading(false);
+            // Lọc các sản phẩm thuộc danh mục "Giày Bóng Đá"
+            const filtered = res.data.filter(product => product.categories === "Giày Bóng Đá");
+            setFilteredProducts(filtered);
+        })
+        .catch(err => {
+            console.log(err.message);
+            setLoading(false);
+        });
     }, []); // Chỉ gọi API một lần khi component mount
 
-
-    const handleViewDetails = (id) => {
-        navigate(`/product/${id}`);
-
-    }
 
     return (
         <section>
@@ -70,22 +60,21 @@ function Product() {
                                             />
                                         </picture>
 
-                                        {/* Nội dung sản phẩm */}
-                                        <div className="card-body">
-                                            <h5 className="card-title">{product.name}</h5>
-                                            <p className="card-text text-danger">
-                                                Giá: {formattedPrice}
-                                            </p>
-                                            <button className="btn btn-primary" onClick={() => handleViewDetails(product.id)}>Xem chi tiết</button>
-                                        </div>
+                                    {/* Nội dung sản phẩm */}
+                                    <div className="card-body">
+                                        <h5 className="card-title">{product.name}</h5>
+                                        <p className="card-text text-danger">
+                                            Giá: {formattedPrice}
+                                        </p>
+                                        <button className="btn btn-primary">Xem chi tiết</button>
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
+                            </div>
+                        );
+                    })}
                 </div>
-            )}
-        </section>
+            </div>
+        </section>        
     );
 }
 

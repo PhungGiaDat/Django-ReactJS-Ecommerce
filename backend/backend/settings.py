@@ -173,6 +173,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000"
 ]
 
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS',
+]
+
 CORS_ALLOW_HEADERS = (
     "accept",
     "authorization",

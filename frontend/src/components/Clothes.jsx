@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useEffect, useState } from "react";
+=======
+import React, { useEffect, useState} from "react";
+>>>>>>> b72250ee1bc51678a9ef05be12516c122ea51c8d
 import { useNavigate } from "react-router-dom";
 import publicAPI from "../publicAPI";
 import '../styles/products.css';
@@ -7,36 +11,48 @@ function Product() {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
+    const [loading,setLoading] = useState(true);
+    const navigate = useNavigate(); // Hook to navigate programmatically
 
     // Gọi API để lấy dữ liệu
     useEffect(() => {
+        setLoading(true)
         publicAPI.get("/api/products/public", {
             withCredentials: true,
             headers: {
                 "Content-Type": "application/json",
             }
-        })
+        })      
         .then(res => {
             console.log(res.data);
             setProducts(res.data);
-
+            setLoading(false);
             // Lọc các sản phẩm thuộc danh mục "Giày Bóng Đá"
             const filtered = res.data.filter(product => product.categories === "Áo Bóng Đá");
             setFilteredProducts(filtered);
         })
         .catch(err => {
             console.log(err.message);
+            setLoading(false);
         });
     }, []); // Chỉ gọi API một lần khi component mount
 
+<<<<<<< HEAD
 
     const handleNavigate = (ID) => {
         navigate(`/product/${ID}`);
     }
+=======
+    // điều hướng đường dẫn đến trang chi tiết sản phẩm
+    const handleViewDetails = (id) => {
+        navigate(`/products/${id}`);
+      };
+
+>>>>>>> b72250ee1bc51678a9ef05be12516c122ea51c8d
 
     return (
         <section>
-            <h1 className="text-center">QUẦN ÁO THỂ THAO</h1>
+            <h1 className="text-center">SẢN PHẨM/HOT SALE</h1>
             <div className="container">
                 <div className="row">
                     {filteredProducts.map(product => {
@@ -60,7 +76,11 @@ function Product() {
                                         <p className="card-text text-danger">
                                             Giá: {formattedPrice}
                                         </p>
+<<<<<<< HEAD
                                         <button className="btn btn-primary" onClick={() => handleNavigate(product.id)}>Xem chi tiết</button>
+=======
+                                        <button className="btn btn-primary" onClick={() => handleViewDetails(product.id)}>Xem chi tiết</button>
+>>>>>>> b72250ee1bc51678a9ef05be12516c122ea51c8d
                                     </div>
                                 </div>
                             </div>

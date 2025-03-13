@@ -11,6 +11,7 @@ import React from 'react';
 import AdminProduct from './components/Admin/pages/AdminProduct';
 
 
+
 function Logout(){
   localStorage.clear();
   return <Navigate to="/login" />;
@@ -37,6 +38,7 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<RegisterComponents />} />
         <Route path='*' element={<NotFound />} />
+        <Route path='/products/:id' element={<ProductDetails />} />
         <Route path='/admin' element={<Admin />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/admin/products" element={<AdminProduct />} />

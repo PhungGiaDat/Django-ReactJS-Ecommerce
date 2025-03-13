@@ -52,7 +52,10 @@ class Product_Public_View(generics.RetrieveAPIView):
     serializer_class = DetailedProductSerializer
     permission_classes = [AllowAny]
 
-
+class Product_Detail_View(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = DetailedProductSerializer
+    permission_classes = [AllowAny]  # Cho phép mọi người truy cập công khai
 
 
 

@@ -1,0 +1,22 @@
+.product-title {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.product-type {
+  color: #666;
+}
+
+.product-images img {
+  max-height: 400px;
+}
+
+.thumbnail {
+  width: 70px;
+  cursor: pointer;
+}
+
+.product-policies li {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
