@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import React, { useEffect, useState } from "react";
-=======
 import React, { useEffect, useState} from "react";
->>>>>>> b72250ee1bc51678a9ef05be12516c122ea51c8d
 import { useNavigate } from "react-router-dom";
 import publicAPI from "../publicAPI";
 import '../styles/products.css';
@@ -12,7 +8,7 @@ function Product() {
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading,setLoading] = useState(true);
-    const navigate = useNavigate(); // Hook to navigate programmatically
+
 
     // Gọi API để lấy dữ liệu
     useEffect(() => {
@@ -37,18 +33,11 @@ function Product() {
         });
     }, []); // Chỉ gọi API một lần khi component mount
 
-<<<<<<< HEAD
-
-    const handleNavigate = (ID) => {
-        navigate(`/product/${ID}`);
-    }
-=======
     // điều hướng đường dẫn đến trang chi tiết sản phẩm
     const handleViewDetails = (id) => {
         navigate(`/products/${id}`);
       };
 
->>>>>>> b72250ee1bc51678a9ef05be12516c122ea51c8d
 
     return (
         <section>
@@ -76,11 +65,7 @@ function Product() {
                                         <p className="card-text text-danger">
                                             Giá: {formattedPrice}
                                         </p>
-<<<<<<< HEAD
-                                        <button className="btn btn-primary" onClick={() => handleNavigate(product.id)}>Xem chi tiết</button>
-=======
                                         <button className="btn btn-primary" onClick={() => handleViewDetails(product.id)}>Xem chi tiết</button>
->>>>>>> b72250ee1bc51678a9ef05be12516c122ea51c8d
                                     </div>
                                 </div>
                             </div>
