@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import publicAPI from "../publicAPI";
 import '../styles/products.css';
 
 function Product() {
+    const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
 
@@ -26,6 +28,11 @@ function Product() {
             console.log(err.message);
         });
     }, []); // Chỉ gọi API một lần khi component mount
+
+
+    const handleNavigate = (ID) => {
+        navigate(`/product/${ID}`);
+    }
 
     return (
         <section>
@@ -53,7 +60,7 @@ function Product() {
                                         <p className="card-text text-danger">
                                             Giá: {formattedPrice}
                                         </p>
-                                        <button className="btn btn-primary">Xem chi tiết</button>
+                                        <button className="btn btn-primary" onClick={() => handleNavigate(product.id)}>Xem chi tiết</button>
                                     </div>
                                 </div>
                             </div>

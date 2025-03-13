@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
-from product.models import Product, Categories
+from product.models import Product, Categories,Size
 
 ''' API dùng khi đăng ký tài khoản user'''
 class UserSerializer(serializers.ModelSerializer):
@@ -60,14 +60,43 @@ class ProductSerializer(serializers.ModelSerializer):
         slug_field='name',
         queryset=Categories.objects.all()
     )
+    
+    sizes = serializers.SerializerMethodField()
     class Meta:
         model = Product
         fields = ['id', 'name', 'description', 'slug','price', 'created_at', 'updated_at', 
-                  'image', 'created_by', 'updated_by', 'categories']
+                  'image', 'created_by', 'updated_by', 'categories', 'sizes', 'quantity']
         extra_kwargs = {'created_by': {'read_only': True},
                         'updated_by': {'read_only': True},
                         'slug':{'read_only':True}}
         
+        
+    def create(self, validated_data):
+        product = Product.objects.create(**validated_data)
+        return product
+    
+    def delete(self, validated_data):
+        product = Product.objects.delete(**validated_data)
+        return product
+    
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.description = validated_data.get('description', instance.description)
+        instance.price = validated_data.get('price', instance.price)
+        instance.image = validated_data.get('image', instance.image)
+        instance.quantity = validated_data.get('quantity', instance.quantity)
+        instance.categories = validated_data.get('categories', instance.categories)
+        instance.save()
+        return instance
+        
+    def get_sizes(self, product):
+        return SizeSerializer(product.sizes.all(), many=True).data
+
+
+class SizeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Size
+        fields = ['size']
         
 
 class SimilarProductSerializer(serializers.ModelSerializer):
@@ -78,16 +107,20 @@ class SimilarProductSerializer(serializers.ModelSerializer):
 # API để lấy chi tiết sản phẩm và sản phẩm tương tự 
 class DetailedProductSerializer(serializers.ModelSerializer):
     similar_products = serializers.SerializerMethodField() # gọi hàm get_similar_products khi api được gọi
-
+    product_sizes = serializers.SerializerMethodField()
     class Meta:
         model = Product
         fields = ['id', 'name', 'description', 'slug', 'price', 'created_at', 'updated_at', 
-                  'image', 'created_by', 'updated_by', 'categories', 'sizes', 'quantity', 'similar_products']
+                  'image', 'created_by', 'updated_by', 'categories', "product_sizes", 'quantity', 'similar_products']
 
     def get_similar_products(self, product):
         products = Product.objects.filter(categories=product.categories).exclude(id=product.id)[:5]
         return SimilarProductSerializer(products, many=True).data  # Serialize danh sách
         
+    def get_product_sizes(self, product):
+        return SizeSerializer(product.sizes, many=True).data
+        
+    
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categories

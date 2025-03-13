@@ -7,3 +7,5 @@ const publicAPI = axios.create({
 })
 
 export default publicAPI;
+
+console.log("Base URL:", process.env.REACT_APP_API_URL);

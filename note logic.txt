@@ -1,0 +1,23 @@
+product-details dung public product api 
+
+cart gọi api từ userID -> 1 user -> 1 cart
+
+1 cart have many products => lấy productsID sau khi button POST productid mà user đang xem xuống database
+
+=> cart hiển thị dựa trên userid and products => model cart have 2 foreignkey user one to one 
+productid one to many
+
+=> build 1 API from cart model để trả về những dữ lieu tren
+
+{
+cartid: '1'
+userid: '
+}
+
+build một file logic từ đó khi model user được đăng ký thì đồng thời tạo ra một cart lấy userid từ user đó 
+
+=> Khi người dùng đăng ký tài khoản mới, bạn có thể tạo một giỏ hàng trống cho họ trong signals.py của Django.
+
+tạo một hàm với logic trên sau đó dung JWT để xác thực nếu người dung2 chưa đăng nhập thì chuyển sang trang bắt buộc đăng nhập 
+
+class API để post dữ lieu order cần duoc Isauthenticated...

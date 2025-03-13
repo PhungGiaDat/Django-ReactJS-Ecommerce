@@ -212,10 +212,12 @@ JAZZMIN_SETTINGS = {
     
      # Hide these apps when generating side menu e.g (auth)
     "hide_apps": ["API"],
-    "hide_models": ["auth.Group","auth.User","authtoken.Token"],
+    "hide_models": ["auth.Group","auth.User","authtoken.Tokens"],
     
-     "show_sidebar": True,
-    
+
+    "show_sidebar": True,
+    "show_ui_builder" : True,
+    "order_with_respect_to": ["product", "order","payment"],    
 }
 
 

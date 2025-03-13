@@ -6,7 +6,9 @@ import Home from './pages/Home';
 import RegisterComponents from './pages/Register';
 import NotFound from './pages/NotFound';
 import Admin from './pages/Admin';
+import ProductDetails from './pages/ProductDetails';
 import React from 'react';
+import AdminProduct from './components/Admin/pages/AdminProduct';
 
 
 function Logout(){
@@ -36,6 +38,8 @@ function App() {
         <Route path='/register' element={<RegisterComponents />} />
         <Route path='*' element={<NotFound />} />
         <Route path='/admin' element={<Admin />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/admin/products" element={<AdminProduct />} />
       </Routes>
     </BrowserRouter>
   );

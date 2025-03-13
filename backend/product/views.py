@@ -9,7 +9,7 @@ from core.views import BaseUserOwnedView
 
 
 
-class Categoris_Public_List_View(generics.ListAPIView):
+class Categories_Public_List_View(generics.ListAPIView):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
     permission_classes = [AllowAny]

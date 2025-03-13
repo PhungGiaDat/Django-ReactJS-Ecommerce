@@ -49,6 +49,7 @@ class Product(models.Model):
     categories = models.ForeignKey(Categories, on_delete=models.CASCADE, related_name="products")
     sizes = models.ManyToManyField(Size, related_name="products")
     shoe_type = models.CharField(max_length=2, choices=SHOE_TYPE_CHOICES, blank=True, null=True)  # Thêm field shoe_type
+    
 
     def __str__(self):
         return self.name
