@@ -55,8 +55,6 @@ function Admin(){
     return (
         <>
           <Sidebar />
-            <h1>Admin Panel</h1>
-    
         </>
       );
 }
