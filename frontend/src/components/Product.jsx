@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import publicAPI from "../publicAPI";
+import publicAPI from "../api/publicAPI";
 import '../styles/products.css';
 
 function Product() {

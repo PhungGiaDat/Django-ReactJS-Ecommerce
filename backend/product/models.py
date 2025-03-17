@@ -43,7 +43,6 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
-<<<<<<< HEAD
     quantity = models.PositiveIntegerField(default=1)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="created_by_user")
     updated_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="updated_by_user")
@@ -51,11 +50,6 @@ class Product(models.Model):
     sizes = models.ManyToManyField(Size, related_name="products")
     shoe_type = models.CharField(max_length=2, choices=SHOE_TYPE_CHOICES, blank=True, null=True)  # Thêm field shoe_type
     
-=======
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="created_by_user")
-    updated_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name="updated_by_user")
-    categories = models.ForeignKey(Categories,on_delete=models.CASCADE,related_name="products")
->>>>>>> b72250ee1bc51678a9ef05be12516c122ea51c8d
 
     def __str__(self):
         return self.name

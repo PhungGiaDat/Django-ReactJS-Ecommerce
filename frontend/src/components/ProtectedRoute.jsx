@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import SecureAPI from "../SecureAPI";
+import SecureAPI from "../api/SecureAPI";
 import { ACCESS_TOKEN,REFRESH_TOKEN } from "../constants";
 import { useState,useEffect } from "react";
 

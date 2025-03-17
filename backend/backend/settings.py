@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'user',
     'payment',
     'core',
+    'inventory',
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',

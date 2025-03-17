@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ACCESS_TOKEN } from "./constants";
+import { ACCESS_TOKEN } from "../constants";
 
 // Khởi tạo một đối tượng axios với baseURL là địa chỉ của API
 // baseURL: 'http://localhost:8000/api'

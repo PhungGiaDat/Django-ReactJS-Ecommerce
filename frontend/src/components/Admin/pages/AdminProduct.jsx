@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import publicAPI from "../../../publicAPI";
-import privateAPI from "../../../SecureAPI";
+import publicAPI from "../../../api/publicAPI";
+import privateAPI from "../../../api/SecureAPI";
 import "../css/Productmanagent.css";
 
 function ProductManagement() {

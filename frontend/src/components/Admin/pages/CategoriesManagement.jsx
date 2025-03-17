@@ -1,6 +1,6 @@
 import {react, useEffect, useState } from "react";
-import publicAPI from "../../../publicAPI";
-import privateAPI from "../../../SecureAPI";
+import publicAPI from "../../../api/publicAPI";
+import privateAPI from "../../../api/SecureAPI";
 import "../css/CategoriesManagement.css";
 
 function CategoriesManagement() {

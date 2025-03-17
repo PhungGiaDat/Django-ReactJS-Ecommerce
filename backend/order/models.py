@@ -37,6 +37,12 @@ class Order(models.Model):
     def __str__(self):
         return f"Order {self.order_id} of {self.user.username}"
     
+# Lưu thông tin khi quản lý bán hàng
+class OrderDetails(models.Model):
+    order = models.models.ForeignKey(Order, verbose_name=_(""), on_delete=models.CASCADE, related_name="order_details")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="order_details")
+    
+    
     
 class OrderItem(models.Model):
     order_item_id = models.AutoField(primary_key=True)
@@ -53,5 +59,5 @@ class OrderItem(models.Model):
     def get_total_price(self) -> float:
         return self.product.price * self.quantity
 
-    
+
     
