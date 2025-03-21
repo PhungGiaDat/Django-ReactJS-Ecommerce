@@ -2,6 +2,15 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 from product.models import Product, Categories,Size
+from order.models import * 
+from payment.models import *
+from user.models import Customer
+from inventory.models import *
+
+
+
+
+# ------ User API ------ #
 
 ''' API dùng khi đăng ký tài khoản user'''
 class UserSerializer(serializers.ModelSerializer):
@@ -50,6 +59,9 @@ class AdminUserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A user with this email is already exist")
         return value
 
+
+
+# ------ Product APP API ------ #
     
 
 ''' API của bảng Product'''
@@ -120,9 +132,58 @@ class DetailedProductSerializer(serializers.ModelSerializer):
     def get_product_sizes(self, product):
         return SizeSerializer(product.sizes, many=True).data
         
-    
+# API trả về thông tin bảng Categories
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categories
         fields = ['ID', 'name']
+        
+        
+        
+# ---- Customer App API ---- #
+        
+# API trả về thông tin bảng Customer 
+class CustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ['id','user','full_name','phone_number','email',
+                  'created_at','updated_at']
+                
+# ---- Inventory App API ---- #
+
+# API của bảng Stock 
+
+class StockSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = Stock
+        fields = ['id','product','quantity']      
+    
+# API của bảng StockEntry          
+          
+class StockEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockEntry
+        fields = ['id','product','supplier','purchase_price',
+                  'quantity','purchase_date','created_by']
+        
+# API của bảng StockTransaction
+class StockTransactionSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = StockTransaction
+        fields = ['id','product','transaction_type','quantity',
+                  'timestamp','created_by']          
+                
+                
+                
+                
+# API của bảng Invoice 
+class InvoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invoice
+        fields = ['id','order'
+                'amount_paid','discount','final_price',
+                'payment_method','payment_method_display','paid_at']
+        
+    def get_payment_method_display(self,object):
+        return object.get_payment_method_display()
         

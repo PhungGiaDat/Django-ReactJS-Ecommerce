@@ -15,20 +15,20 @@ class Stock(models.Model):
 # StockEntry - quản lý nhập hàng từ nhà cung cấp
     
 class StockEntry(models.Model):
-    Product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     supplier = models.CharField(max_length=255)
-    purchase_price = models.FloatField()
+    purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.IntegerField()
     purchase_date = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     
     def __str__(self):
-        return f"{self.quantity} units of {self.Product} from {self.supplier}"
+        return f"{self.quantity} units of {self.product} from {self.supplier}"
     
 class StockTransaction(models.Model):
     TRANSACTION_TYPE = [
         ('IN','NHẬP KHO'),
-        ('OUT','XUẤT KHO')
+        ('OUT','XUẤT KHO'),
         ('ADJ','ĐIỀU CHỈNH KHO')
     ]
     
