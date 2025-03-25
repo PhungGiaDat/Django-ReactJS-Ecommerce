@@ -76,12 +76,14 @@ class Product(models.Model):
     def get_related_products(self,limit=product_limit):
         return Product.objects.filter(categories=self.categories).exclude(id=self.id)[:limit]
 
-    def get_lastest_purchase_price(self):
-        latest_stock_entry = StockEntry.objects.filter(product = self).order_by('-purchase_date').first()
-        return latest_stock_entry.purchase_price if latest_stock_entry else None ## Trả về none nếu không có dữ liệu
+    # # Lấy giá mua mới nhất thêm vào một trường dữ liệu mới
+    # def get_latest_purchase_price(self):
+    #     latest_stock_entry = StockEntry.objects.filter(product = self).order_by('-purchase_date').first()
+    #     return latest_stock_entry.purchase_price if latest_stock_entry else None ## Trả về none nếu không có dữ liệu
     
-    def get_selling_price(self):
-        latest_price = self.get_lastest_purchase_price()
-        return latest_price * 1.3 if latest_price else None ## Trả về none nếu không có dữ liệu
+    # # Cập nhật giá bán
+    # def get_selling_price(self):
+    #     latest_price = self.get_latest_purchase_price()
+    #     return latest_price * 1.3 if latest_price else None ## Trả về none nếu không có dữ liệu
 
     

@@ -50,7 +50,7 @@ class Order(models.Model):
     
     def __str__(self):
         customer_name = self.customer.full_name if self.customer else "Khách vãng lai"
-        return f"Order {self.order_id} of {self.customer.full_name}"
+        return f"Order {self.order_id} of {customer_name}"
     
 # Lưu thông tin chi tiết khi quản lý bán hàng về các giá và số lượng
 class OrderDetails(models.Model):

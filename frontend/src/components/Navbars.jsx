@@ -1,7 +1,7 @@
 import {React,useEffect,useState} from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faShoppingCart } from "@fortawesome/free-solid-svg-icons"; 
-import api from '../publicAPI';
+import api from '../api/publicAPI';
 
 function Navbars(){
     const [categories, setCategories] = useState([]);

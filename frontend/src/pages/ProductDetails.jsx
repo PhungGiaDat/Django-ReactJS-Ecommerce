@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import publicAPI from "../publicAPI";
+import publicAPI from "../api/publicAPI";
 import '../styles/productdetails.css';
 
 function ProductDetails() {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
-import publicAPI from "../publicAPI";
+import publicAPI from "../api/publicAPI";
 import '../styles/products.css';
 
 function Product() {

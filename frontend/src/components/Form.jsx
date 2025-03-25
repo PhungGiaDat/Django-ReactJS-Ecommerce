@@ -1,5 +1,5 @@
 import { useState } from "react";
-import api from "../SecureAPI";
+import api from "../api/SecureAPI";
 import { useNavigate } from "react-router-dom";
 import { ACCESS_TOKEN,REFRESH_TOKEN } from "../constants";
 import "../styles/form.css";

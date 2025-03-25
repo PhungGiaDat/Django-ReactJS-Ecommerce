@@ -29,5 +29,5 @@ class Invoice(models.Model):
         super().save(*args, **kwargs)
     
     def __str__(self):
-        return f"Hóa đơn {self.id} - Order {self.order.order_id} - {self.get_payment_method_display()}"
+        return f"Hóa đơn {self.id} Của đơn hàng {self.order.order_id} thanh toán {self.get_payment_method_display()}"
     
