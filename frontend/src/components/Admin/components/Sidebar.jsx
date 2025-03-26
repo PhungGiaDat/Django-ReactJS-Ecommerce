@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "../css/Sidebar.css";
 import ProductManagement from "../pages/AdminProduct";
 import CategoriesManagement from "../../Admin/pages/CategoriesManagement";
+import Order from "../../Admin/pages/Order";
 
 function Sidebar() {
     const [selectedPage, setSelectedPage] = useState("home");
@@ -19,11 +20,11 @@ function Sidebar() {
             </div>
 
             <div className="content">
-                {selectedPage === "home" && <h2>Trang chủ</h2>}
+                {selectedPage === "home"}
                 {selectedPage === "products" && <ProductManagement />}
-                {selectedPage === "orders" && <h2>Đơn hàng</h2>}
+                {selectedPage === "orders" && <Order />}
                 {selectedPage === "categories" && <CategoriesManagement />}
-                {selectedPage === "settings" && <h2>Cài đặt</h2>}
+                {selectedPage === "settings"}
             </div>
         </div>
     );
