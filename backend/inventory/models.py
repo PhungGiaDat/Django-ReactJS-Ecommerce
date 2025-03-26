@@ -15,11 +15,19 @@ class Stock(models.Model):
     def __str__(self):
         return f"{self.product} - {self.quantity} units in stock"
     
+    
+class Supplier(models.Model):
+    name = models.CharField(max_length=255)
+    contact_info = models.TextField(blank=True,null=True)
+    
+    def __str__(self):
+        return self.name
+    
 # StockEntry - quản lý nhập hàng từ nhà cung cấp
     
 class StockEntry(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    supplier = models.CharField(max_length=255)
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
     selling_price = models.DecimalField(max_digits=10,decimal_places=2)
     quantity = models.IntegerField()
@@ -27,9 +35,9 @@ class StockEntry(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     
     def save(self,*args, **kwargs): 
-        # Nếu không có giá bán ,thì giá bán = giá mua * 1.4
+        # Nếu không có giá bán ,thì giá bán = giá mua * 0.4
         if not self.selling_price:
-            self.selling_price = self.purchase_price * Decimal(1.4)
+            self.selling_price = self.purchase_price * Decimal(0.4)
         super().save(*args, **kwargs)
     
     def __str__(self):
@@ -60,8 +68,6 @@ def save_price_history(sender, instance, **kwargs):
     except:
         pass
     
-    
-
     
 class StockTransaction(models.Model):
     TRANSACTION_TYPE = [

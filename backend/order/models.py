@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from product.models import Product
 from user.models import Customer
+from django.utils.timezone import now 
 # Create your models here.
 
 
@@ -42,48 +43,43 @@ class Order(models.Model):
      
     order_id = models.AutoField(primary_key=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE,related_name= "order", null= True,blank=True)
-    total_price= models.DecimalField(max_digits=10, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=now)
     status = models.CharField(max_length=20,choices=OrderStatus.choices,default=OrderStatus.PENDING)
     order_type = models.CharField(max_length=20,choices=OrderType.choices,default=OrderType.ONLINE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    
     
     def __str__(self):
         customer_name = self.customer.full_name if self.customer else "Khách vãng lai"
         return f"Order {self.order_id} of {customer_name}"
     
 # Lưu thông tin chi tiết khi quản lý bán hàng về các giá và số lượng
-class OrderDetails(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="order_details")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="order_details")
-    quantity = models.PositiveIntegerField(default=1)
-    price_sold = models.DecimalField(max_digits=10, decimal_places=2)
-    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    final_price = models.DecimalField(max_digits=10, decimal_places=2)
-    
-    
-    def save(self, *args, **kwargs):
-        self.final_price = self.price_sold * (1 - float(self.discount) / 100)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.product.name} x {self.quantity} trong đơn hàng {self.order.order_id}"
-    
-    
 class OrderItem(models.Model):
-    order_item_id = models.AutoField(primary_key=True)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-
+    price_sold = models.DecimalField(max_digits=10, decimal_places=2)  # Giá bán thực tế tại thời điểm đặt hàng
+    discount = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # % giảm giá
+    final_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False,default=0)  # Giá đã giảm (1 sp)
+    final_total = models.DecimalField(max_digits=12, decimal_places=2, editable=False,default=0)  # Tổng giá của sp đó trong đơn
+    created_at = models.DateTimeField(default=now)  # Thêm default để tạo migration
     class Meta:
-        unique_together = ('order', 'product')  # Đảm bảo mỗi sản phẩm chỉ xuất hiện 1 lần trong đơn hàng
+        unique_together = ('order', 'product')
+        verbose_name = "Chi tiết đơn hàng"
+        verbose_name_plural = "Chi tiết đơn hàng"
 
-    def __str__(self) -> str:
-        return f"{self.product.name} (x{self.quantity})"
+    def save(self, *args, **kwargs):
+        # Tính giá sau khi áp dụng giảm giá
+        self.final_price = self.price_sold * (1 - self.discount / 100)
+        # Tổng tiền = final_price * quantity
+        self.final_total = self.final_price * self.quantity
+        super().save(*args, **kwargs)
+       
 
-    def get_total_price(self) -> float:
-        return self.product.price * self.quantity
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity} trong đơn hàng {self.order.order_id}"
+
+    def get_total_price(self):
+        return self.final_price * self.quantity
 
 
     

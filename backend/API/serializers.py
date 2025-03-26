@@ -62,8 +62,6 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
 
 # ------ Product APP API ------ #
-    
-
 ''' API của bảng Product'''
 class ProductSerializer(serializers.ModelSerializer):
 

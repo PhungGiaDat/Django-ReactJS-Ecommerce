@@ -5,7 +5,7 @@ from django.utils.text import slugify
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.db.models import Sum
 from django.db.models.signals import post_save
-from inventory.models import StockEntry
+
 # Create your models here.
 
 

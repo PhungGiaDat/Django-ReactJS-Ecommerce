@@ -106,7 +106,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ecommerce',
+        'NAME': 'shoes_ecommerce',
         'USER': 'root',
         'PASSWORD': 'Pgd05092004@',
         'HOST': 'localhost',  # Hoặc IP nếu không phải localhost
