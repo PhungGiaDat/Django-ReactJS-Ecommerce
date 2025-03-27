@@ -1,10 +1,10 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
-from product.models import Product, Categories,Size
-from order.models import * 
+from product.models import *
+from order.models import *
 from payment.models import *
-from user.models import Customer
+from user.models import *
 from inventory.models import *
 
 
@@ -54,16 +54,51 @@ class AdminUserSerializer(serializers.ModelSerializer):
         return instance
 
     def validate_email(self,value):
-        user = User.objects.filter(email=value).exitst()
+        user = User.objects.filter(email=value).exists()
         if user:
             raise serializers.ValidationError("A user with this email is already exist")
         return value
 
 
+# ---- Inventory App API ---- #
+
+class SupplierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Supplier
+        fields = ['id', 'name', 'contact_info']
+
+
+# API của bảng Stock
+class StockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Stock
+        fields = ['id', 'quantity']
+
+
+# API của bảng StockEntry
+class StockEntrySerializer(serializers.ModelSerializer):
+    supplier = SupplierSerializer(read_only=True)
+
+    class Meta:
+        model = StockEntry
+        fields = ['id', 'purchase_price', 'selling_price', 'quantity', 'purchase_date', 'supplier']
+
+
+# API của bảng StockTransaction
+class StockTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockTransaction
+        fields = ['id', 'transaction_type', 'quantity', 'timestamp']
+
 
 # ------ Product APP API ------ #
 ''' API của bảng Product'''
 class ProductSerializer(serializers.ModelSerializer):
+
+    stock = StockSerializer(read_only=True)
+    # Sử dụng related_name mặc định nếu bạn chưa định nghĩa trong StockEntry và StockTransaction
+    stock_entries = StockEntrySerializer(source='stockentry_set', many=True, read_only=True)
+    stock_transactions = StockTransactionSerializer(source='stocktransaction_set', many=True, read_only=True)
 
     # Lấy về du lieu categories bằng tên thay vì ID
     categories = serializers.SlugRelatedField(
@@ -134,7 +169,8 @@ class DetailedProductSerializer(serializers.ModelSerializer):
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categories
-        fields = ['ID', 'name']
+        fields = ['ID', 'name', 'created_by', 'updated_by']
+        extra_kwargs = {'created_by': {'read_only': True}, 'updated_by': {'read_only': True}}
         
         
         
@@ -146,34 +182,7 @@ class CustomerSerializer(serializers.ModelSerializer):
         model = Customer
         fields = ['id','user','full_name','phone_number','email',
                   'created_at','updated_at']
-                
-# ---- Inventory App API ---- #
 
-# API của bảng Stock 
-
-class StockSerializer(serializers.ModelSerializer):
-    class Meta: 
-        model = Stock
-        fields = ['id','product','quantity']      
-    
-# API của bảng StockEntry          
-          
-class StockEntrySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = StockEntry
-        fields = ['id','product','supplier','purchase_price',
-                  'quantity','purchase_date','created_by']
-        
-# API của bảng StockTransaction
-class StockTransactionSerializer(serializers.ModelSerializer):
-    class Meta: 
-        model = StockTransaction
-        fields = ['id','product','transaction_type','quantity',
-                  'timestamp','created_by']          
-                
-                
-                
-                
 # API của bảng Invoice 
 class InvoiceSerializer(serializers.ModelSerializer):
     class Meta:

@@ -13,7 +13,7 @@ function UserForm({ route, method }) {
   const navigate = useNavigate();
 
   const isLogin = method === "login"; // Kiểm tra form là Login hay Register
-  const title = isLogin ? "Login" : "Register";
+  const title = isLogin ? "Đăng Nhập" : "Đăng Ký";
 
   const handleSubmit = async (e) => {
     setLoading(true);
@@ -22,25 +22,26 @@ function UserForm({ route, method }) {
     try {
       const res = await api.post(`/api/${route}`, { username, password });
 
-      if (isLogin) {
+      if (isLogin && res.status === 200) {
         localStorage.setItem(ACCESS_TOKEN, res.data.access);
         localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+        localStorage.setItem("is_admin",res.data.is_admin);
         navigate("/");
+        // Kiểm tra xem người dùng có phải là admin không
+        // Nếu có thì chuyển hướng đến trang admin
+        if (res.data.is_admin) {
+          navigate("/admin");
+        }
+
       } else {
         navigate("/login");
       }
 
-      if (res.status === 200) {
-        localStorage.setItem(ACCESS_TOKEN, res.data.access);
-        localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
-        navigate("/");
-      } else {
-        alert("Invalid credentials");
-      }
     } catch (error) {
-      alert("Something went wrong. Please try again.");
+        alert("Đang nhập thất bại. Vui lòng kiểm tra lại thông tin tài khoản.");
+        console.error("Error during login:", error);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
@@ -93,7 +94,7 @@ function UserForm({ route, method }) {
                   fullWidth
                   onClick={() => navigate("/register")}
                 >
-                  Don't have an account? Sign up
+                  Chưa có tài khoản? Đăng ký  
                 </Button>
               )}
             </Stack>

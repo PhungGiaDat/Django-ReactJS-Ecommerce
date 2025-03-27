@@ -45,9 +45,9 @@ function App() {
 
    
           <Route path="/admin" element={
-            // <ProtectedRoute>
+            <ProtectedRoute>
               <AdminLayout />
-            // </ProtectedRoute>
+            </ProtectedRoute>
           }>
             <Route path = "dashboard" index element={<Dashboard />} /> {/* `/admin` mặc định vào Dashboard */}
             <Route path="products" element={<AdminProduct />} />

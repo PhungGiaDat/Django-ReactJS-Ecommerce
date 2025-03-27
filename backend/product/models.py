@@ -14,7 +14,9 @@ from django.db.models.signals import post_save
 class Categories(models.Model):
     ID = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
-
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="categories_created")
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="categories_updated")
+    
     class Meta:
         ordering = ['ID']
 

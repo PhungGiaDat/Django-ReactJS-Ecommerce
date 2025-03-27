@@ -32,7 +32,7 @@ function CategoriesManagement() {
 
   const [categoryData, setCategoryData] = useState({
     name: "",
-    description: "",
+    
   });
 
   useEffect(() => {
@@ -42,7 +42,7 @@ function CategoriesManagement() {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const response = await publicAPI.get("/api/categories");
+      const response = await publicAPI.get("/api/products/categories/public");
       setCategories(response.data);
     } catch (error) {
       console.error("Error fetching categories", error);
@@ -57,12 +57,12 @@ function CategoriesManagement() {
       setSelectedCategory(category);
       setCategoryData({
         name: category.name || "",
-        description: category.description || "",
+        
       });
     } else {
       setEditMode(false);
       setSelectedCategory(null);
-      setCategoryData({ name: "", description: "" });
+      setCategoryData({ name: ""});
     }
   };
 
@@ -77,8 +77,9 @@ function CategoriesManagement() {
 
   const handleSubmit = async () => {
     try {
+      // Thêm dấu / vào cuối endpoint API vì django sẽ tự redirect khi endpoint không có dấu / và mất dữ liệu
       if (!editMode) {
-        await privateAPI.post("/api/categories", categoryData);
+        await privateAPI.post("/api/products/categories/", categoryData);
         alert("Thêm danh mục thành công!");
       } else {
         await privateAPI.put(`/api/categories/${selectedCategory.id}`, categoryData);
@@ -154,7 +155,6 @@ function CategoriesManagement() {
         <DialogContent dividers>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField label="Tên danh mục" name="name" value={categoryData.name} onChange={handleInputChange} required />
-            <TextField label="Mô tả" name="description" multiline rows={3} value={categoryData.description} onChange={handleInputChange} />
           </Box>
         </DialogContent>
         <DialogActions>
