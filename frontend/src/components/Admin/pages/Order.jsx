@@ -1,20 +1,28 @@
 import React, { useEffect, useState } from "react";
 import publicAPI from "../../../api/publicAPI";
+import "../css/Order.css";
 
-function Order() {
+const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchOrders();
   }, []);
 
   const fetchOrders = async () => {
+    setLoading(true);
     try {
       const response = await publicAPI.get("/api/orders");
       setOrders(response.data);
-    } catch (error) {
-      console.error("Error fetching orders", error);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching orders", err);
+      setError("Có lỗi khi lấy dữ liệu đơn hàng.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -22,72 +30,83 @@ function Order() {
     setSelectedOrder(order);
   };
 
-  return (
-    <div>
-      <h1>Order Management</h1>
-      {/* Order Summary Section */}
-      <div
-        style={{
-          marginTop: "20px",
-          padding: "15px",
-          border: "1px solid #ccc",
-          borderRadius: "5px",
-        }}
-      >
-        <h2>Order Summary</h2>
-        <p><strong>Total Orders:</strong> {orders.length}</p>
-        <p><strong>Pending Orders:</strong> {orders.filter(order => order.status === "Pending").length}</p>
-        <p><strong>Completed Orders:</strong> {orders.filter(order => order.status === "Completed").length}</p>
-      </div>
+  // Component hiển thị tóm tắt đơn hàng
+  const OrderSummary = ({ orders }) => (
+    <div className="order-summary">
+      <h2 className="text">Order Summary</h2>
+      <p>
+        <strong>Total Orders:</strong> {orders.length}
+      </p>
+      <p>
+        <strong>Pending Orders:</strong> {orders.filter(o => o.status === "Pending").length}
+      </p>
+      <p>
+        <strong>Completed Orders:</strong> {orders.filter(o => o.status === "Completed").length}
+      </p>
+    </div>
+  );
 
-      {/* List of Orders as Buttons */}
-      <div style={{ marginTop: "20px", display: "flex", flexWrap: "wrap", gap: "15px" }}>
+  // Component danh sách đơn hàng theo dạng list view
+  const OrderList = ({ orders, onOrderClick }) => (
+    <div className="order-list">
+      <h2>Order List</h2>
+      <ul>
         {orders.map((order) => (
-          <button
+          <li
             key={order._id}
-            onClick={() => handleOrderClick(order)}
-            style={{
-              padding: "10px 20px",
-              cursor: "pointer",
-              backgroundColor: "#007bff",
-              color: "#fff",
-              border: "none",
-              borderRadius: "5px",
-            }}
+            className="order-list-item"
+            onClick={() => onOrderClick(order)}
           >
-            Order #{order._id}
-          </button>
+            Order #{order._id} - {order.status}
+          </li>
         ))}
-      </div>
+      </ul>
+    </div>
+  );
 
-      {/* Order Details Section */}
-      {selectedOrder && (
-        <div
-          style={{
-            marginTop: "30px",
-            padding: "20px",
-            border: "1px solid #ccc",
-            borderRadius: "5px",
-            backgroundColor: "#f9f9f9",
-          }}
-        >
-          <h2>Order Details</h2>
-          <p><strong>Order ID:</strong> {selectedOrder._id}</p>
-          <p><strong>Customer:</strong> {selectedOrder.customer}</p>
-          <p><strong>Total:</strong> ${selectedOrder.total}</p>
-          <p><strong>Status:</strong> {selectedOrder.status}</p>
-          <h3>Products:</h3>
-          <ul>
-            {selectedOrder.products.map((product) => (
-              <li key={product._id}>
-                <strong>{product.name}</strong> - Quantity: {product.quantity}
-              </li>
-            ))}
-          </ul>
-        </div>
+  // Component chi tiết đơn hàng
+  const OrderDetails = ({ order }) => (
+    <div className="order-details">
+      <h2>Order Details</h2>
+      <p>
+        <strong>Order ID:</strong> {order._id}
+      </p>
+      <p>
+        <strong>Customer:</strong> {order.customer}
+      </p>
+      <p>
+        <strong>Total:</strong> ${order.total}
+      </p>
+      <p>
+        <strong>Status:</strong> {order.status}
+      </p>
+      <h3>Products:</h3>
+      <ul>
+        {order.products && order.products.map((product) => (
+          <li key={product._id}>
+            <strong>{product.name}</strong> - Quantity: {product.quantity}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  return (
+    <div className="order-container">
+      <h1>Order Management</h1>
+
+      {loading && <p className="center-text">Loading orders...</p>}
+      {error && <p className="center-text error-text">{error}</p>}
+
+      {!loading && !error && (
+        <>
+          <OrderSummary orders={orders} />
+          <OrderList orders={orders} onOrderClick={handleOrderClick} />
+          {selectedOrder && <OrderDetails order={selectedOrder} />}
+        </>
       )}
     </div>
   );
-}
+};
 
-export default Order;
+export default OrderManagement;

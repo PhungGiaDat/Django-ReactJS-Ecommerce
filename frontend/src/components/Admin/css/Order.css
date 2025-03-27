@@ -1,0 +1,57 @@
+/* ../css/order.css */
+
+.text{
+    color: #000;
+    font-size: 20px;
+    font-weight: bold;
+    margin-right: 50px;
+}
+
+
+.order-container {
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .center-text {
+    text-align: center;
+  }
+  
+  .error-text {
+    color: red;
+  }
+  
+  .order-summary {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .order-list {
+    margin-bottom: 20px;
+  }
+  
+  .order-list ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .order-list-item {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+  }
+  
+  .order-list-item:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .order-details {
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+  }
+  

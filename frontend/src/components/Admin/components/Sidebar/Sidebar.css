@@ -1,0 +1,37 @@
+/* Sidebar CSS */
+.sidebar {
+    width: 240px; /* Giảm bớt độ rộng */
+    height: 100vh;
+    background-color: #222e3c; /* Màu nền sidebar */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding-top: 20px;
+  }
+  
+  .list-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .list-group-item {
+    padding: 12px 20px;
+    font-size: 16px;
+    border: none;
+    background: none;
+    color: white;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+  }
+  
+  .list-group-item:hover {
+    background: #3a4b63; /* Hiệu ứng hover */
+  }
+  
+  .list-group-item.active {
+    background-color: #007bff; /* Màu xanh của active */
+    font-weight: bold;
+    border-radius: 5px;
+  }

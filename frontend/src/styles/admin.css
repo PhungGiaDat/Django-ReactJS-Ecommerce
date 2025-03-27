@@ -1,0 +1,31 @@
+.admin-layout {
+    display: flex;
+  }
+  
+  /* Sidebar nằm bên trái */
+  .admin-layout .sidebar {
+    width: 250px;
+    flex-shrink: 0;
+  }
+  
+  /* Phần nội dung chính nằm bên phải */
+  .main-content {
+    width: calc(100% - 250px);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Header cố định ở đầu phần nội dung */
+  .main-content .header {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+  }
+  
+  /* Phần chứa nội dung được render từ Outlet */
+  .content-area {
+    padding: 20px;
+    background-color: #f9f9f9;
+    min-height: 100vh;
+  }
+  

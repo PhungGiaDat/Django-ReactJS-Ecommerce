@@ -1,0 +1,10 @@
+.header {
+    left: 250px;                  /* Chừa chỗ cho sidebar */
+    width: calc(100% - 250px);    /* Tránh bị che */
+    z-index: 1100 !important;     /* Đảm bảo trên sidebar */
+  }
+  
+  .header .MuiToolbar-root {
+    height: 60px;
+  }
+  
