@@ -43,6 +43,9 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,  # ✅ Tự động tạo refresh token mới khi refresh
+    "BLACKLIST_AFTER_ROTATION": True,  # ✅ Lưu token vào database
+    "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
 # Application definition
@@ -64,6 +67,7 @@ INSTALLED_APPS = [
     'inventory',
     'rest_framework',
     'rest_framework.authtoken',
+     "rest_framework_simplejwt.token_blacklist",  # ✅ Thêm vào đây
     'corsheaders',
     
 ]

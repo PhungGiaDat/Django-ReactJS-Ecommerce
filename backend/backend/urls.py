@@ -9,11 +9,11 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("api/token/",TokenObtainPairView.as_view(),name='get_token'),
+    path("api/user/token/",TokenObtainPairView.as_view(),name='get_token'),
     path("api/token/refresh/",TokenRefreshView.as_view(),name='refresh_token'),
     path("api-auth/",include("rest_framework.urls")),
     path("api/products/",include("product.urls")),
-    # path("api/user/",include("user.urls"))
+    path("api/user/",include("user.urls"))
 ] 
 
 if settings.DEBUG:

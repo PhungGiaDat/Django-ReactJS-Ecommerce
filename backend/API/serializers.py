@@ -92,57 +92,86 @@ class StockTransactionSerializer(serializers.ModelSerializer):
 
 
 # ------ Product APP API ------ #
-''' API của bảng Product'''
-class ProductSerializer(serializers.ModelSerializer):
-
-    stock = StockSerializer(read_only=True)
-    # Sử dụng related_name mặc định nếu bạn chưa định nghĩa trong StockEntry và StockTransaction
-    stock_entries = StockEntrySerializer(source='stockentry_set', many=True, read_only=True)
-    stock_transactions = StockTransactionSerializer(source='stocktransaction_set', many=True, read_only=True)
-
-    # Lấy về du lieu categories bằng tên thay vì ID
-    categories = serializers.SlugRelatedField(
-        slug_field='name',
-        queryset=Categories.objects.all()
-    )
-    
-    sizes = serializers.SerializerMethodField()
-    class Meta:
-        model = Product
-        fields = ['id', 'name', 'description', 'slug','price', 'created_at', 'updated_at', 
-                  'image', 'created_by', 'updated_by', 'categories', 'sizes', 'quantity']
-        extra_kwargs = {'created_by': {'read_only': True},
-                        'updated_by': {'read_only': True},
-                        'slug':{'read_only':True}}
-        
-        
-    def create(self, validated_data):
-        product = Product.objects.create(**validated_data)
-        return product
-    
-    def delete(self, validated_data):
-        product = Product.objects.delete(**validated_data)
-        return product
-    
-    def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
-        instance.description = validated_data.get('description', instance.description)
-        instance.price = validated_data.get('price', instance.price)
-        instance.image = validated_data.get('image', instance.image)
-        instance.quantity = validated_data.get('quantity', instance.quantity)
-        instance.categories = validated_data.get('categories', instance.categories)
-        instance.save()
-        return instance
-        
-    def get_sizes(self, product):
-        return SizeSerializer(product.sizes.all(), many=True).data
-
 
 class SizeSerializer(serializers.ModelSerializer):
+    """Serializer cho size của sản phẩm"""
+    product_type = serializers.StringRelatedField()  # Hoặc dùng `SlugRelatedField`
+
     class Meta:
         model = Size
-        fields = ['size']
+        fields = ["id", "size", "product_type"]  # Thêm product_type
         
+        
+''' API của bảng Product'''
+class ProductSerializer(serializers.ModelSerializer):
+    """Serializer cho Product, tạo Stock, StockEntry, StockTransaction khi thêm sản phẩm"""
+
+    sizes = serializers.PrimaryKeyRelatedField(queryset=Size.objects.all(), many=True)
+    categories = serializers.SlugRelatedField(slug_field="name", queryset=Categories.objects.all())
+    shoe_type = serializers.ChoiceField(choices=Product.SHOE_TYPE_CHOICES, required=False, allow_null=True)
+    quantity = serializers.IntegerField(write_only=True, required=True)  # Số lượng nhập kho
+    sizes_detail = SizeSerializer(source="sizes", many=True, read_only=True)  # Chi tiết size
+
+    class Meta:
+        model = Product
+        fields = [
+            "id", "name", "description", "slug", "created_at", "updated_at",
+            "image", "created_by", "updated_by", "categories", "sizes", "sizes_detail",
+            "shoe_type", "quantity"
+        ]
+        extra_kwargs = {
+            "created_by": {"read_only": True},
+            "updated_by": {"read_only": True},
+            "slug": {"read_only": True},
+        }
+
+    def create(self, validated_data):
+        """Tạo Product + cập nhật Stock, StockEntry, StockTransaction"""
+        quantity = validated_data.pop("quantity")
+        sizes = validated_data.pop("sizes", [])
+
+        product = Product.objects.create(**validated_data)
+        product.sizes.set(sizes)  # Gán danh sách sizes cho sản phẩm
+
+        # 1️⃣ Tạo Stock
+        stock = Stock.objects.create(product=product, quantity=quantity)
+
+        # 2️⃣ Tạo StockEntry (Nhập kho)
+        StockEntry.objects.create(
+            product=product,
+            quantity=quantity,
+            purchase_price=validated_data.get("price", 0),
+            selling_price=validated_data.get("price", 0),
+        )
+
+        # 3️⃣ Tạo StockTransaction (Ghi nhận giao dịch nhập kho)
+        StockTransaction.objects.create(
+            product=product,
+            transaction_type="IN",
+            quantity=quantity,
+        )
+
+        return product
+
+    def update(self, instance, validated_data):
+        """Cập nhật Product + số lượng tồn kho nếu thay đổi"""
+        instance.name = validated_data.get("name", instance.name)
+        instance.description = validated_data.get("description", instance.description)
+        instance.price = validated_data.get("price", instance.price)
+        instance.image = validated_data.get("image", instance.image)
+        instance.categories = validated_data.get("categories", instance.categories)
+
+        # Cập nhật số lượng trong Stock nếu có thay đổi
+        new_quantity = validated_data.get("quantity", instance.quantity)
+        if new_quantity != instance.quantity:
+            stock = Stock.objects.get(product=instance)
+            stock.quantity = new_quantity
+            stock.save()
+
+        instance.quantity = new_quantity
+        instance.save()
+        return instance
+
 
 class SimilarProductSerializer(serializers.ModelSerializer):
     class Meta:

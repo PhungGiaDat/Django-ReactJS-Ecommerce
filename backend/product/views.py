@@ -1,8 +1,8 @@
 
 from rest_framework import serializers,generics
-from API.serializers import ProductSerializer,CategoriesSerializer,DetailedProductSerializer
+from API.serializers import ProductSerializer,CategoriesSerializer,DetailedProductSerializer,SizeSerializer
 from rest_framework.permissions import IsAuthenticated,AllowAny
-from .models import Product,Categories
+from .models import Product,Categories,Size
 from rest_framework import status
 from rest_framework.response import Response
 from core.views import BaseUserOwnedView
@@ -58,4 +58,8 @@ class Product_Detail_View(generics.RetrieveAPIView):
     permission_classes = [AllowAny]  # Cho phép mọi người truy cập công khai
 
 
-
+class Size_List_View(generics.ListAPIView):
+    queryset = Size.objects.all()
+    serializer_class = SizeSerializer
+    permission_classes = [AllowAny]
+    

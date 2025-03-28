@@ -2,7 +2,7 @@ from django.db import models
 from product.models import Product
 from django.contrib.auth.models import User 
 from django.dispatch import receiver
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save,post_save
 from decimal import Decimal
 
 
@@ -39,6 +39,10 @@ class StockEntry(models.Model):
         if not self.selling_price:
             self.selling_price = self.purchase_price * Decimal(0.4)
         super().save(*args, **kwargs)
+        
+        stock,created = Stock.objects.get_or_create(product=self.product)
+        stock.quantity += self.quantity
+        stock.save()
     
     def __str__(self):
         return f"{self.quantity} units of {self.product} from {self.supplier}"
@@ -67,6 +71,14 @@ def save_price_history(sender, instance, **kwargs):
             )
     except:
         pass
+    
+@receiver(post_save,sender = StockEntry)
+def update_stock(sender,instance,created,**kwargs):
+    # kiểm tra nếu hàm created được gọi 
+    if created:
+        stock, created = Stock.objects.get_or_create(product = instance.product)
+        stock.quantity += instance.quantity
+        stock.save()
     
     
 class StockTransaction(models.Model):
