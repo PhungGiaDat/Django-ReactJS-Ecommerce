@@ -14,8 +14,8 @@ import {
   Typography,
   Select,
   MenuItem,
-  InputLabel,
   FormControl,
+  InputLabel,
   Grid,
   IconButton,
   Card,
@@ -23,6 +23,8 @@ import {
   CardActions,
   CircularProgress,
   CardMedia,
+  OutlinedInput,
+  Chip,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -31,6 +33,8 @@ import AddIcon from "@mui/icons-material/Add";
 function ProductManagement() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [sizes, setSizes] = useState([]);
+  const [filteredSizes, setFilteredSizes] = useState([]); // Lọc size theo danh mục
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -43,26 +47,38 @@ function ProductManagement() {
     image: null,
     category: "",
     quantity: "",
+    sizes: [],
+    shoe_type: "",
   });
 
   useEffect(() => {
     fetchCategories();
+    fetchSizes();
     fetchProducts();
   }, []);
 
   const fetchCategories = async () => {
     try {
-      const response = await publicAPI.get("/api/categories");
+      const response = await publicAPI.get("/api/products/categories/public");
       setCategories(response.data);
     } catch (error) {
       console.error("Error fetching categories", error);
     }
   };
 
+  const fetchSizes = async () => {
+    try {
+      const response = await publicAPI.get("/api/products/sizes/");
+      setSizes(response.data);
+    } catch (error) {
+      console.error("Error fetching sizes", error);
+    }
+  };
+
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await publicAPI.get("/api/public/products");
+      const response = await publicAPI.get("/api/products/public");
       setProducts(response.data);
     } catch (error) {
       console.error("Error fetching products", error);
@@ -70,7 +86,6 @@ function ProductManagement() {
     setLoading(false);
   };
 
-  // Mở dialog
   const openDialog = (product = null) => {
     setModalOpen(true);
     if (product) {
@@ -80,10 +95,13 @@ function ProductManagement() {
         name: product.name || "",
         description: product.description || "",
         price: product.price || "",
-        image: null, // Không tự động load ảnh cũ vào input file
-        category: product.categories?.ID || "",
+        image: null,
+        category: product.category || "",
         quantity: product.quantity || "",
+        sizes: product.sizes?.map((size) => size.id) || [],
+        shoe_type: product.shoe_type || "",
       });
+      handleCategoryChange({ target: { value: product.category || "" } });
     } else {
       setEditMode(false);
       setSelectedProduct(null);
@@ -94,16 +112,17 @@ function ProductManagement() {
         image: null,
         category: "",
         quantity: "",
+        sizes: [],
+        shoe_type: "",
       });
+      setFilteredSizes([]); // Ẩn danh sách size ban đầu
     }
   };
 
-  // Đóng dialog
   const closeDialog = () => {
     setModalOpen(false);
   };
 
-  // Xử lý nhập form
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewProduct((prev) => ({ ...prev, [name]: value }));
@@ -113,42 +132,65 @@ function ProductManagement() {
     setNewProduct((prev) => ({ ...prev, image: e.target.files[0] }));
   };
 
+  const handleSizeChange = (event) => {
+    setNewProduct((prev) => ({ ...prev, sizes: event.target.value }));
+  };
+
+  const handleCategoryChange = (event) => {
+    const categoryId = Number(event.target.value); // Ép kiểu số
+
+    setNewProduct((prev) => ({
+        ...prev,
+        category: categoryId,
+        sizes: [] // Reset sizes khi đổi category
+    }));
+
+    if (!categories.length) {
+        console.warn("Categories list is empty!");
+        return;
+    }
+
+    const selectedCategory = categories.find((cat) => cat.ID === categoryId);
+    if (!selectedCategory) {
+        console.warn(`Category with ID ${categoryId} not found!`);
+        return;
+    }
+
+    if (!sizes.length) {
+        console.warn("Sizes list is empty!");
+        return;
+    }
+
+    if (selectedCategory.name.toLowerCase().includes("giày bóng đá")) {
+        setFilteredSizes(sizes.filter((size) => !isNaN(size.size))); // Lọc size số
+    } else {
+        setFilteredSizes(sizes.filter((size) => isNaN(size.size))); // Lọc size chữ (S, M, L)
+    }
+
+    console.log("Selected category:", selectedCategory);
+    console.log("Filtered sizes:", filteredSizes);
+};
+
   const handleSubmit = async () => {
     const formData = new FormData();
     Object.keys(newProduct).forEach((key) => {
-      formData.append(key, newProduct[key]);
+      if (Array.isArray(newProduct[key])) {
+        newProduct[key].forEach((value) => formData.append(key, value));
+      } else {
+        formData.append(key, newProduct[key]);
+      }
     });
 
     try {
-      if (!editMode) {
-        await privateAPI.post("/api/products/create", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        alert("Thêm sản phẩm thành công");
-      } else {
-        await privateAPI.put(`/api/products/${selectedProduct.id}/update`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        alert("Cập nhật sản phẩm thành công");
-      }
+      await privateAPI.post("/api/products/create", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      alert("Thêm sản phẩm thành công");
       fetchProducts();
       closeDialog();
     } catch (error) {
       alert("Có lỗi xảy ra!");
-      console.error("Error creating/updating product", error);
-    }
-  };
-
-  const handleDelete = async (productId) => {
-    if (window.confirm("Bạn có chắc muốn xóa sản phẩm này?")) {
-      try {
-        await privateAPI.delete(`/api/products/${productId}`);
-        alert("Xóa sản phẩm thành công");
-        fetchProducts();
-      } catch (error) {
-        alert("Xóa sản phẩm thất bại");
-        console.error("Error deleting product", error);
-      }
+      console.error("Lỗi khi thêm sản phẩm", error);
     }
   };
 
@@ -166,62 +208,124 @@ function ProductManagement() {
         Thêm sản phẩm
       </Button>
 
-      {loading ? (
-        <Box sx={{ textAlign: "center", mt: 3 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Grid container spacing={3}>
-          {products.map((product) => (
-            <Grid item xs={12} sm={6} md={4} key={product.id}>
-              <Card sx={{ transition: "0.3s", "&:hover": { boxShadow: 6 } }}>
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={product.image || "https://via.placeholder.com/200"}
-                  alt={product.name}
-                />
-                <CardContent>
-                  <Typography variant="h6">{product.name}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Giá: {product.price}$
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Danh mục: {product.categories?.name || "N/A"}
-                  </Typography>
-                  <Typography variant="body2" color={product.quantity > 0 ? "green" : "red"}>
-                    Trạng thái: {product.quantity > 0 ? "Còn hàng" : "Hết hàng"}
-                  </Typography>
-                </CardContent>
-                <CardActions>
-                  <IconButton color="primary" onClick={() => openDialog(product)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton color="error" onClick={() => handleDelete(product.id)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-
-      {/* Dialog Thêm / Sửa sản phẩm */}
       <Dialog open={modalOpen} onClose={closeDialog}>
-        <DialogTitle>{editMode ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}</DialogTitle>
+        <DialogTitle>
+          {editMode ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
+        </DialogTitle>
         <DialogContent dividers>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField label="Tên sản phẩm" name="name" value={newProduct.name} onChange={handleInputChange} required />
-            <TextField label="Mô tả" name="description" multiline rows={3} value={newProduct.description} onChange={handleInputChange} />
-            <TextField label="Giá" name="price" type="number" value={newProduct.price} onChange={handleInputChange} required />
-            <TextField label="Số lượng" name="quantity" type="number" value={newProduct.quantity} onChange={handleInputChange} required />
-            <TextField type="file" name="image" onChange={handleFileChange} />
-          </Box>
+          <TextField
+            fullWidth
+            label="Tên sản phẩm"
+            name="name"
+            value={newProduct.name}
+            onChange={handleInputChange}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            label="Mô tả"
+            name="description"
+            value={newProduct.description}
+            onChange={handleInputChange}
+            sx={{ mb: 2 }}
+            multiline
+            rows={3}
+          />
+          <TextField
+            fullWidth
+            label="Giá"
+            type="number"
+            name="price"
+            value={newProduct.price}
+            onChange={handleInputChange}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            label="Số lượng"
+            type="number"
+            name="quantity"
+            value={newProduct.quantity}
+            onChange={handleInputChange}
+            sx={{ mb: 2 }}
+          />
+
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="category-label">Danh mục</InputLabel>
+            <Select
+              labelId="category-label"
+              value={newProduct.category || ""}
+              onChange={handleCategoryChange}
+            >
+              <MenuItem value="" disabled>
+                Chọn danh mục
+              </MenuItem>
+              {categories.length > 0 ? (
+                categories.map((category) => (
+                  <MenuItem key={category.ID} value={category.ID}>
+                    {category.name}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>Không có danh mục nào</MenuItem>
+              )}
+            </Select>
+          </FormControl>
+
+          {filteredSizes.length > 0 && (
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Sizes</InputLabel>
+              <Select
+                multiple
+                value={newProduct.sizes}
+                onChange={handleSizeChange}
+                input={<OutlinedInput label="Sizes" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {selected.map((value) => (
+                      <Chip
+                        key={value}
+                        label={filteredSizes.find((s) => s.id === value)?.size}
+                      />
+                    ))}
+                  </Box>
+                )}
+              >
+                {filteredSizes.map((size) => (
+                  <MenuItem key={size.id} value={size.id}>
+                    {size.size}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {newProduct.image && (
+            <Card sx={{ mb: 2 }}>
+              <CardMedia
+                component="img"
+                height="140"
+                image={
+                  typeof newProduct.image === "string"
+                    ? newProduct.image
+                    : URL.createObjectURL(newProduct.image)
+                }
+                alt="Hình ảnh sản phẩm"
+              />
+            </Card>
+          )}
+
+          <Button variant="contained" component="label">
+            Chọn ảnh sản phẩm
+            <input type="file" hidden onChange={handleFileChange} />
+          </Button>
         </DialogContent>
+
         <DialogActions>
           <Button onClick={closeDialog}>Hủy</Button>
-          <Button variant="contained" onClick={handleSubmit}>{editMode ? "Cập nhật" : "Thêm"}</Button>
+          <Button variant="contained" onClick={handleSubmit}>
+            Thêm
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

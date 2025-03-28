@@ -1,12 +1,12 @@
 import axios from "axios";
 import { ACCESS_TOKEN } from "../constants";  // Kiểm tra key này
 
-const SecureAPI = axios.create({
+const LoginAPI = axios.create({
     baseURL: process.env.REACT_APP_API_URL,
 });
 
 // Thêm interceptor để gắn token vào request
-SecureAPI.interceptors.request.use(
+LoginAPI.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem(ACCESS_TOKEN);
         console.log("Token from localStorage:", token);  // Debug
@@ -20,4 +20,4 @@ SecureAPI.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-export default SecureAPI;
+export default LoginAPI;

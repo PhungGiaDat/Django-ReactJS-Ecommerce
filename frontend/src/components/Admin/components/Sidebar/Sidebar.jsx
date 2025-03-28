@@ -45,7 +45,7 @@ function Sidebar() {
               isActive ? "list-group-item active" : "list-group-item"
             }
           >
-            POS
+            Bán Hàng
           </NavLink>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api/SecureAPI";
+import api from "../api/loginAPI";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
 
 // Import Material UI
@@ -20,89 +20,91 @@ function UserForm({ route, method }) {
     e.preventDefault();
 
     try {
-      const res = await api.post(`/api/${route}`, { username, password });
+        const apiUrl = isLogin ? "/api/user/login/" : "/api/user/register/";
+        const res = await api.post(apiUrl, { username, password });
 
-      if (isLogin && res.status === 200) {
-        localStorage.setItem(ACCESS_TOKEN, res.data.access);
-        localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
-        localStorage.setItem("is_admin",res.data.is_admin);
-        navigate("/");
-        // Kiểm tra xem người dùng có phải là admin không
-        // Nếu có thì chuyển hướng đến trang admin
-        if (res.data.is_admin) {
-          navigate("/admin");
+        if (isLogin && res.status === 200) {
+            localStorage.setItem(ACCESS_TOKEN, res.data.access);
+            localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+            localStorage.setItem("is_admin", res.data.is_admin);
+
+            // Điều hướng
+            if (res.data.is_admin) {
+                navigate("/admin");
+            } else {
+                navigate("/");
+            }
+        } else {
+            navigate("/login");
         }
 
-      } else {
-        navigate("/login");
-      }
-
     } catch (error) {
-        alert("Đang nhập thất bại. Vui lòng kiểm tra lại thông tin tài khoản.");
-        console.error("Error during login:", error);
+        alert("Thao tác thất bại. Vui lòng kiểm tra lại thông tin.");
+        console.error("Error:", error);
     } finally {
         setLoading(false);
     }
-  };
+};
 
-  return (
-    <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-      <Card sx={{ width: 400, padding: 3, boxShadow: 3 }}>
-        <CardContent>
-          <Typography variant="h5" align="center" gutterBottom>
-            {title}
-          </Typography>
 
-          <form onSubmit={handleSubmit}>
-            <TextField
-              label="Username"
-              variant="outlined"
+return (
+  <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+    <Card sx={{ width: 400, padding: 3, boxShadow: 3 }}>
+      <CardContent>
+        <Typography variant="h5" align="center" gutterBottom>
+          {title}
+        </Typography>
+
+        <form onSubmit={handleSubmit}>
+          <TextField
+            label="Username"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+
+          <TextField
+            label="Password"
+            type="password"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          <Stack spacing={2} sx={{ mt: 2 }}>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
               fullWidth
-              margin="normal"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} color="inherit" /> : title}
+            </Button>
 
-            <TextField
-              label="Password"
-              type="password"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-
-            <Stack spacing={2} sx={{ mt: 2 }}>
+            {/* Nút chuyển sang trang Register nếu đang ở Login */}
+            {isLogin && (
               <Button
-                type="submit"
-                variant="contained"
-                color="primary"
+                variant="outlined"
+                color="secondary"
                 fullWidth
-                disabled={loading}
+                onClick={() => navigate("/register")}
               >
-                {loading ? <CircularProgress size={24} color="inherit" /> : title}
+                Chưa có tài khoản? Đăng ký  
               </Button>
-
-              {/* Nút chuyển sang trang Register nếu đang ở Login */}
-              {isLogin && (
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  fullWidth
-                  onClick={() => navigate("/register")}
-                >
-                  Chưa có tài khoản? Đăng ký  
-                </Button>
-              )}
-            </Stack>
-          </form>
-        </CardContent>
-      </Card>
-    </Box>
-  );
+            )}
+          </Stack>
+        </form>
+      </CardContent>
+    </Card>
+  </Box>
+);
 }
 
 export default UserForm;

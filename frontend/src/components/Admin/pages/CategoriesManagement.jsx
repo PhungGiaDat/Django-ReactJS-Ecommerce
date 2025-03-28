@@ -32,7 +32,6 @@ function CategoriesManagement() {
 
   const [categoryData, setCategoryData] = useState({
     name: "",
-    
   });
 
   useEffect(() => {
@@ -43,6 +42,7 @@ function CategoriesManagement() {
     setLoading(true);
     try {
       const response = await publicAPI.get("/api/products/categories/public");
+      console.log(response.data);
       setCategories(response.data);
     } catch (error) {
       console.error("Error fetching categories", error);
@@ -57,12 +57,11 @@ function CategoriesManagement() {
       setSelectedCategory(category);
       setCategoryData({
         name: category.name || "",
-        
       });
     } else {
       setEditMode(false);
       setSelectedCategory(null);
-      setCategoryData({ name: ""});
+      setCategoryData({ name: "" });
     }
   };
 
@@ -82,7 +81,7 @@ function CategoriesManagement() {
         await privateAPI.post("/api/products/categories/", categoryData);
         alert("Thêm danh mục thành công!");
       } else {
-        await privateAPI.put(`/api/categories/${selectedCategory.id}`, categoryData);
+        await privateAPI.put(`/api/products/categories/update/${selectedCategory.ID}/`, categoryData);
         alert("Cập nhật danh mục thành công!");
       }
       fetchCategories();
@@ -93,10 +92,10 @@ function CategoriesManagement() {
     }
   };
 
-  const handleDelete = async (categoryId) => {
+  const handleDelete = async (categoryID) => {
     if (window.confirm("Bạn có chắc muốn xóa danh mục này?")) {
       try {
-        await privateAPI.delete(`/api/categories/${categoryId}`);
+        await privateAPI.delete(`/api/products/categories/delete/${categoryID.ID}`);
         alert("Xóa danh mục thành công!");
         fetchCategories();
       } catch (error) {
@@ -136,10 +135,16 @@ function CategoriesManagement() {
                   </Typography>
                 </CardContent>
                 <CardActions>
-                  <IconButton color="primary" onClick={() => openDialog(category)}>
+                  <IconButton
+                    color="primary"
+                    onClick={() => openDialog(category)}
+                  >
                     <EditIcon />
                   </IconButton>
-                  <IconButton color="error" onClick={() => handleDelete(category.id)}>
+                  <IconButton
+                    color="error"
+                    onClick={() => handleDelete(category.id)}
+                  >
                     <DeleteIcon />
                   </IconButton>
                 </CardActions>
@@ -151,15 +156,25 @@ function CategoriesManagement() {
 
       {/* Dialog Thêm / Sửa danh mục */}
       <Dialog open={modalOpen} onClose={closeDialog}>
-        <DialogTitle>{editMode ? "Chỉnh sửa danh mục" : "Thêm danh mục mới"}</DialogTitle>
+        <DialogTitle>
+          {editMode ? "Chỉnh sửa danh mục" : "Thêm danh mục mới"}
+        </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField label="Tên danh mục" name="name" value={categoryData.name} onChange={handleInputChange} required />
+            <TextField
+              label="Tên danh mục"
+              name="name"
+              value={categoryData.name}
+              onChange={handleInputChange}
+              required
+            />
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={closeDialog}>Hủy</Button>
-          <Button variant="contained" onClick={handleSubmit}>{editMode ? "Cập nhật" : "Thêm"}</Button>
+          <Button variant="contained" onClick={handleSubmit}>
+            {editMode ? "Cập nhật" : "Thêm"}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
