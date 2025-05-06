@@ -123,6 +123,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "created_by": {"read_only": True},
             "updated_by": {"read_only": True},
             "slug": {"read_only": True},
+            "image": {"required": False},
         }
 
     def create(self, validated_data):

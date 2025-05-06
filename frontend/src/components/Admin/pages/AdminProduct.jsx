@@ -45,7 +45,7 @@ function ProductManagement() {
     description: "",
     price: "",
     image: null,
-    category: "",
+    categories: "",
     quantity: "",
     sizes: [],
     shoe_type: "",
@@ -96,7 +96,7 @@ function ProductManagement() {
         description: product.description || "",
         price: product.price || "",
         image: null,
-        category: product.category || "",
+        categories: product.categories || "",
         quantity: product.quantity || "",
         sizes: product.sizes?.map((size) => size.id) || [],
         shoe_type: product.shoe_type || "",
@@ -110,7 +110,7 @@ function ProductManagement() {
         description: "",
         price: "",
         image: null,
-        category: "",
+        categories: "",
         quantity: "",
         sizes: [],
         shoe_type: "",
@@ -138,6 +138,7 @@ function ProductManagement() {
 
   const handleCategoryChange = (event) => {
     const categoryId = Number(event.target.value); // Ép kiểu số
+    console.log("Chọn danh mục:", categoryId); // Kiểm tra giá trị
 
     setNewProduct((prev) => ({
         ...prev,
