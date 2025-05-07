@@ -107,32 +107,46 @@ class ProductSerializer(serializers.ModelSerializer):
     """Serializer cho Product, tạo Stock, StockEntry, StockTransaction khi thêm sản phẩm"""
 
     sizes = serializers.PrimaryKeyRelatedField(queryset=Size.objects.all(), many=True)
-    categories = serializers.SlugRelatedField(slug_field="name", queryset=Categories.objects.all())
+    categories = serializers.PrimaryKeyRelatedField(queryset=Categories.objects.all())
     shoe_type = serializers.ChoiceField(choices=Product.SHOE_TYPE_CHOICES, required=False, allow_null=True)
-    quantity = serializers.IntegerField(write_only=True, required=True)  # Số lượng nhập kho
-    sizes_detail = SizeSerializer(source="sizes", many=True, read_only=True)  # Chi tiết size
+    quantity = serializers.IntegerField(write_only=True, required=True)
+    supplier = serializers.PrimaryKeyRelatedField(queryset=Supplier.objects.all(), required=True, write_only=True)
+    purchase_price = serializers.DecimalField(max_digits=10, decimal_places=2, required=True, write_only=True)
+    selling_price = serializers.DecimalField(max_digits=10, decimal_places=2, required=True, write_only=True)
+    sizes_detail = SizeSerializer(source="sizes", many=True, read_only=True)
+    price = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
-            "id", "name", "description", "slug", "created_at", "updated_at",
+            "id", "name", "description", "price", "slug", "created_at", "updated_at",
             "image", "created_by", "updated_by", "categories", "sizes", "sizes_detail",
-            "shoe_type", "quantity"
+            "shoe_type", "quantity", "supplier", "purchase_price", "selling_price"
         ]
         extra_kwargs = {
             "created_by": {"read_only": True},
             "updated_by": {"read_only": True},
             "slug": {"read_only": True},
-            "image": {"required": False},
+            "image": {"required": False, "allow_null": True},
         }
+
+    def get_price(self, obj):
+        """Get the latest selling price from StockEntry"""
+        latest_entry = obj.stockentry_set.order_by('-purchase_date').first()
+        return latest_entry.selling_price if latest_entry else None
 
     def create(self, validated_data):
         """Tạo Product + cập nhật Stock, StockEntry, StockTransaction"""
         quantity = validated_data.pop("quantity")
         sizes = validated_data.pop("sizes", [])
+        categories = validated_data.pop("categories")
+        supplier = validated_data.pop("supplier")
+        purchase_price = validated_data.pop("purchase_price")
+        selling_price = validated_data.pop("selling_price")
 
-        product = Product.objects.create(**validated_data)
-        product.sizes.set(sizes)  # Gán danh sách sizes cho sản phẩm
+        # Create product with the category
+        product = Product.objects.create(categories=categories, **validated_data)
+        product.sizes.set(sizes)
 
         # 1️⃣ Tạo Stock
         stock = Stock.objects.create(product=product, quantity=quantity)
@@ -141,8 +155,10 @@ class ProductSerializer(serializers.ModelSerializer):
         StockEntry.objects.create(
             product=product,
             quantity=quantity,
-            purchase_price=validated_data.get("price", 0),
-            selling_price=validated_data.get("price", 0),
+            purchase_price=purchase_price,
+            selling_price=selling_price,
+            supplier=supplier,
+            created_by=self.context['request'].user
         )
 
         # 3️⃣ Tạo StockTransaction (Ghi nhận giao dịch nhập kho)
@@ -150,26 +166,19 @@ class ProductSerializer(serializers.ModelSerializer):
             product=product,
             transaction_type="IN",
             quantity=quantity,
+            created_by=self.context['request'].user
         )
 
         return product
 
     def update(self, instance, validated_data):
         """Cập nhật Product + số lượng tồn kho nếu thay đổi"""
-        instance.name = validated_data.get("name", instance.name)
-        instance.description = validated_data.get("description", instance.description)
-        instance.price = validated_data.get("price", instance.price)
-        instance.image = validated_data.get("image", instance.image)
-        instance.categories = validated_data.get("categories", instance.categories)
+        if "categories" in validated_data:
+            instance.categories = validated_data.pop("categories")
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
 
-        # Cập nhật số lượng trong Stock nếu có thay đổi
-        new_quantity = validated_data.get("quantity", instance.quantity)
-        if new_quantity != instance.quantity:
-            stock = Stock.objects.get(product=instance)
-            stock.quantity = new_quantity
-            stock.save()
-
-        instance.quantity = new_quantity
         instance.save()
         return instance
 

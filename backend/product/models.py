@@ -51,9 +51,8 @@ class Product(models.Model):
     updated_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="updated_by_user")
     categories = models.ForeignKey(Categories, on_delete=models.CASCADE, related_name="products")
     sizes = models.ManyToManyField(Size, related_name="products")
-    shoe_type = models.CharField(max_length=2, choices=SHOE_TYPE_CHOICES, blank=True, null=True)  # Thêm field shoe_type
+    shoe_type = models.CharField(max_length=2, choices=SHOE_TYPE_CHOICES, blank=True, null=True)
     
-
     def __str__(self):
         return self.name
 
@@ -71,8 +70,14 @@ class Product(models.Model):
             self.slug = unique_slug
         super().save(*args, **kwargs)
 
+    def get_latest_price(self):
+        """Get the latest selling price from StockEntry"""
+        latest_entry = self.stockentry_set.order_by('-purchase_date').first()
+        return latest_entry.selling_price if latest_entry else None
+
     def formatted_price(self):
-        return f"{intcomma(self.price):,} VNĐ"
+        price = self.get_latest_price()
+        return f"{intcomma(price):,} VNĐ" if price else "N/A"
 
     product_limit = 5
     def get_related_products(self,limit=product_limit):

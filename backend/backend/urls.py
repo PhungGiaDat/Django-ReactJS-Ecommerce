@@ -1,4 +1,3 @@
-
 from django.contrib import admin
 from django.urls import path,include
 from user.views import CreateUserView
@@ -13,7 +12,8 @@ urlpatterns = [
     path("api/token/refresh/",TokenRefreshView.as_view(),name='refresh_token'),
     path("api-auth/",include("rest_framework.urls")),
     path("api/products/",include("product.urls")),
-    path("api/user/",include("user.urls"))
+    path("api/user/",include("user.urls")),
+    path("api/inventory/",include("inventory.urls"))
 ] 
 
 if settings.DEBUG:

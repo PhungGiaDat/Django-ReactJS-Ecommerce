@@ -25,6 +25,7 @@ import {
   CardMedia,
   OutlinedInput,
   Chip,
+  Alert,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -34,27 +35,38 @@ function ProductManagement() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [sizes, setSizes] = useState([]);
-  const [filteredSizes, setFilteredSizes] = useState([]); // Lọc size theo danh mục
+  const [suppliers, setSuppliers] = useState([]);
+  const [filteredSizes, setFilteredSizes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
-    price: "",
+    purchase_price: "",
+    selling_price: "",
     image: null,
-    categories: "",
+    category: "",
     quantity: "",
     sizes: [],
     shoe_type: "",
+    supplier: "",
   });
+
+  // Add logout dialog state
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchCategories();
     fetchSizes();
     fetchProducts();
+    fetchSuppliers();
   }, []);
 
   const fetchCategories = async () => {
@@ -63,6 +75,7 @@ function ProductManagement() {
       setCategories(response.data);
     } catch (error) {
       console.error("Error fetching categories", error);
+      setError("Failed to fetch categories");
     }
   };
 
@@ -72,6 +85,7 @@ function ProductManagement() {
       setSizes(response.data);
     } catch (error) {
       console.error("Error fetching sizes", error);
+      setError("Failed to fetch sizes");
     }
   };
 
@@ -79,14 +93,70 @@ function ProductManagement() {
     setLoading(true);
     try {
       const response = await publicAPI.get("/api/products/public");
-      setProducts(response.data);
+      // Fetch stock data for each product
+      const productsWithStock = await Promise.all(
+        response.data.map(async (product) => {
+          try {
+            const stockResponse = await privateAPI.get(`/api/inventory/stocks/${product.id}/`);
+            const stockEntryResponse = await privateAPI.get(`/api/inventory/stock-entries/?product=${product.id}`);
+            const latestEntry = stockEntryResponse.data[0]; // Get the latest entry
+            
+            return {
+              ...product,
+              quantity: stockResponse.data.quantity,
+              purchase_price: latestEntry?.purchase_price || 0,
+              selling_price: latestEntry?.selling_price || 0
+            };
+          } catch (error) {
+            console.error(`Error fetching stock data for product ${product.id}:`, error);
+            return {
+              ...product,
+              quantity: 0,
+              purchase_price: 0,
+              selling_price: 0
+            };
+          }
+        })
+      );
+      setProducts(productsWithStock);
     } catch (error) {
       console.error("Error fetching products", error);
+      setError("Failed to fetch products");
     }
     setLoading(false);
   };
 
+  const fetchSuppliers = async () => {
+    try {
+      const response = await publicAPI.get("/api/suppliers/");
+      setSuppliers(response.data);
+    } catch (error) {
+      console.error("Error fetching suppliers", error);
+      setError("Failed to fetch suppliers");
+    }
+  };
+
+  const handleDeleteClick = (productId) => {
+    setProductToDelete(productId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
+
+    try {
+      await privateAPI.delete(`/api/products/${productToDelete}/`);
+      await fetchProducts();
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      setError("Failed to delete product");
+    }
+  };
+
   const openDialog = (product = null) => {
+    setError("");
     setModalOpen(true);
     if (product) {
       setEditMode(true);
@@ -94,33 +164,38 @@ function ProductManagement() {
       setNewProduct({
         name: product.name || "",
         description: product.description || "",
-        price: product.price || "",
+        purchase_price: product.purchase_price || "",
+        selling_price: product.selling_price || "",
         image: null,
-        categories: product.categories || "",
+        category: product.categories?.ID || "",
         quantity: product.quantity || "",
         sizes: product.sizes?.map((size) => size.id) || [],
         shoe_type: product.shoe_type || "",
+        supplier: product.supplier?.id || "",
       });
-      handleCategoryChange({ target: { value: product.category || "" } });
+      handleCategoryChange({ target: { value: product.categories?.ID || "" } });
     } else {
       setEditMode(false);
       setSelectedProduct(null);
       setNewProduct({
         name: "",
         description: "",
-        price: "",
+        purchase_price: "",
+        selling_price: "",
         image: null,
-        categories: "",
+        category: "",
         quantity: "",
         sizes: [],
         shoe_type: "",
+        supplier: "",
       });
-      setFilteredSizes([]); // Ẩn danh sách size ban đầu
+      setFilteredSizes([]);
     }
   };
 
   const closeDialog = () => {
     setModalOpen(false);
+    setError("");
   };
 
   const handleInputChange = (e) => {
@@ -129,7 +204,18 @@ function ProductManagement() {
   };
 
   const handleFileChange = (e) => {
-    setNewProduct((prev) => ({ ...prev, image: e.target.files[0] }));
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5000000) { // 5MB limit
+        setError("File size too large. Please choose an image under 5MB.");
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        setError("Please select an image file.");
+        return;
+      }
+      setNewProduct((prev) => ({ ...prev, image: file }));
+    }
   };
 
   const handleSizeChange = (event) => {
@@ -137,69 +223,107 @@ function ProductManagement() {
   };
 
   const handleCategoryChange = (event) => {
-    const categoryId = Number(event.target.value); // Ép kiểu số
-    console.log("Chọn danh mục:", categoryId); // Kiểm tra giá trị
-
+    const categoryId = event.target.value;
+    
     setNewProduct((prev) => ({
-        ...prev,
-        category: categoryId,
-        sizes: [] // Reset sizes khi đổi category
+      ...prev,
+      category: categoryId,
+      sizes: []
     }));
 
-    if (!categories.length) {
-        console.warn("Categories list is empty!");
-        return;
-    }
-
     const selectedCategory = categories.find((cat) => cat.ID === categoryId);
-    if (!selectedCategory) {
-        console.warn(`Category with ID ${categoryId} not found!`);
-        return;
+    if (selectedCategory) {
+      const isFootwear = selectedCategory.name.toLowerCase().includes("giày");
+      setFilteredSizes(sizes.filter((size) => 
+        isFootwear ? !isNaN(size.size) : isNaN(size.size)
+      ));
     }
+  };
 
-    if (!sizes.length) {
-        console.warn("Sizes list is empty!");
-        return;
-    }
-
-    if (selectedCategory.name.toLowerCase().includes("giày bóng đá")) {
-        setFilteredSizes(sizes.filter((size) => !isNaN(size.size))); // Lọc size số
-    } else {
-        setFilteredSizes(sizes.filter((size) => isNaN(size.size))); // Lọc size chữ (S, M, L)
-    }
-
-    console.log("Selected category:", selectedCategory);
-    console.log("Filtered sizes:", filteredSizes);
-};
+  const validateForm = () => {
+    if (!newProduct.name) return "Product name is required";
+    if (!newProduct.purchase_price || newProduct.purchase_price <= 0) return "Valid purchase price is required";
+    if (!newProduct.selling_price || newProduct.selling_price <= 0) return "Valid selling price is required";
+    if (!newProduct.quantity || newProduct.quantity < 0) return "Valid quantity is required";
+    if (!newProduct.category) return "Category is required";
+    if (!newProduct.supplier) return "Supplier is required";
+    if (!newProduct.sizes.length) return "At least one size must be selected";
+    return null;
+  };
 
   const handleSubmit = async () => {
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
     const formData = new FormData();
-    Object.keys(newProduct).forEach((key) => {
-      if (Array.isArray(newProduct[key])) {
-        newProduct[key].forEach((value) => formData.append(key, value));
-      } else {
-        formData.append(key, newProduct[key]);
-      }
+    formData.append("name", newProduct.name);
+    formData.append("description", newProduct.description);
+    formData.append("purchase_price", newProduct.purchase_price);
+    formData.append("selling_price", newProduct.selling_price);
+    formData.append("quantity", newProduct.quantity);
+    formData.append("categories", newProduct.category);
+    formData.append("supplier", newProduct.supplier);
+
+    newProduct.sizes.forEach(sizeId => {
+      formData.append("sizes", sizeId);
     });
 
+    if (newProduct.image) {
+      formData.append("image", newProduct.image);
+    }
+
     try {
-      await privateAPI.post("/api/products/create", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      alert("Thêm sản phẩm thành công");
-      fetchProducts();
+      if (editMode) {
+        await privateAPI.put(`/api/products/${selectedProduct.id}/`, formData);
+      } else {
+        await privateAPI.post("/api/products/create", formData);
+      }
+      await fetchProducts();
       closeDialog();
     } catch (error) {
-      alert("Có lỗi xảy ra!");
-      console.error("Lỗi khi thêm sản phẩm", error);
+      console.error("Error saving product:", error.response?.data);
+      setError(
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        "Failed to save product"
+      );
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const handleLogout = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    // Clear any stored tokens or user data
+    localStorage.removeItem('token');
+    // Redirect to login page
+    window.location.href = '/login';
   };
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        🛍️ Quản lý sản phẩm
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4">
+          🛍️ Quản lý sản phẩm
+        </Typography>
+        <Button
+          variant="outlined"
+          color="error"
+          onClick={handleLogout}
+        >
+          Đăng xuất
+        </Button>
+      </Box>
+
       <Button
         variant="contained"
         startIcon={<AddIcon />}
@@ -209,38 +333,179 @@ function ProductManagement() {
         Thêm sản phẩm
       </Button>
 
-      <Dialog open={modalOpen} onClose={closeDialog}>
+      {/* Product Grid */}
+      <Grid container spacing={2}>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mt: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          products.map((product) => (
+            <Grid item xs={12} sm={6} md={4} key={product.id}>
+              <Card>
+                <CardMedia
+                  component="img"
+                  height="200"
+                  image={product.image || '/placeholder-image.png'}
+                  alt={product.name}
+                  sx={{ objectFit: 'cover' }}
+                />
+                <CardContent>
+                  <Typography variant="h6" noWrap>
+                    {product.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    {product.description?.substring(0, 100)}...
+                  </Typography>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    {new Intl.NumberFormat('vi-VN', { 
+                      style: 'currency', 
+                      currency: 'VND' 
+                    }).format(product.selling_price)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Giá nhập: {new Intl.NumberFormat('vi-VN', { 
+                      style: 'currency', 
+                      currency: 'VND' 
+                    }).format(product.purchase_price)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Danh mục: {product.categories?.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Số lượng tồn kho: {product.quantity}
+                  </Typography>
+                  {product.shoe_type && (
+                    <Typography variant="body2" color="text.secondary">
+                      Loại giày: {product.shoe_type}
+                    </Typography>
+                  )}
+                </CardContent>
+                <CardActions>
+                  <IconButton 
+                    onClick={() => openDialog(product)}
+                    color="primary"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton 
+                    color="error"
+                    onClick={() => handleDeleteClick(product.id)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))
+        )}
+      </Grid>
+
+      {/* Logout Dialog */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={() => setLogoutDialogOpen(false)}
+      >
+        <DialogTitle>Xác nhận đăng xuất</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLogoutDialogOpen(false)}>
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleLogoutConfirm}
+            color="error"
+            variant="contained"
+          >
+            Đăng xuất
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Xác nhận xóa</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Bạn có chắc chắn muốn xóa sản phẩm này?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+          >
+            Xóa
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add/Edit Product Dialog */}
+      <Dialog open={modalOpen} onClose={closeDialog} maxWidth="md" fullWidth>
         <DialogTitle>
           {editMode ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
         </DialogTitle>
         <DialogContent dividers>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          
           <TextField
             fullWidth
             label="Tên sản phẩm"
             name="name"
             value={newProduct.name}
             onChange={handleInputChange}
+            required
             sx={{ mb: 2 }}
           />
+          
           <TextField
             fullWidth
             label="Mô tả"
             name="description"
             value={newProduct.description}
             onChange={handleInputChange}
-            sx={{ mb: 2 }}
             multiline
             rows={3}
-          />
-          <TextField
-            fullWidth
-            label="Giá"
-            type="number"
-            name="price"
-            value={newProduct.price}
-            onChange={handleInputChange}
             sx={{ mb: 2 }}
           />
+          
+          <TextField
+            fullWidth
+            label="Giá nhập"
+            type="number"
+            name="purchase_price"
+            value={newProduct.purchase_price}
+            onChange={handleInputChange}
+            required
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            fullWidth
+            label="Giá bán đề xuất"
+            type="number"
+            name="selling_price"
+            value={newProduct.selling_price}
+            onChange={handleInputChange}
+            required
+            sx={{ mb: 2 }}
+          />
+          
           <TextField
             fullWidth
             label="Số lượng"
@@ -248,33 +513,44 @@ function ProductManagement() {
             name="quantity"
             value={newProduct.quantity}
             onChange={handleInputChange}
+            required
             sx={{ mb: 2 }}
           />
 
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel id="category-label">Danh mục</InputLabel>
+          <FormControl fullWidth required sx={{ mb: 2 }}>
+            <InputLabel>Danh mục</InputLabel>
             <Select
-              labelId="category-label"
-              value={newProduct.category || ""}
+              value={newProduct.category}
+              name="category"
               onChange={handleCategoryChange}
+              label="Danh mục"
             >
-              <MenuItem value="" disabled>
-                Chọn danh mục
-              </MenuItem>
-              {categories.length > 0 ? (
-                categories.map((category) => (
-                  <MenuItem key={category.ID} value={category.ID}>
-                    {category.name}
-                  </MenuItem>
-                ))
-              ) : (
-                <MenuItem disabled>Không có danh mục nào</MenuItem>
-              )}
+              {categories.map((category) => (
+                <MenuItem key={category.ID} value={category.ID}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth required sx={{ mb: 2 }}>
+            <InputLabel>Nhà cung cấp</InputLabel>
+            <Select
+              value={newProduct.supplier}
+              name="supplier"
+              onChange={handleInputChange}
+              label="Nhà cung cấp"
+            >
+              {suppliers.map((supplier) => (
+                <MenuItem key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
           {filteredSizes.length > 0 && (
-            <FormControl fullWidth sx={{ mb: 2 }}>
+            <FormControl fullWidth required sx={{ mb: 2 }}>
               <InputLabel>Sizes</InputLabel>
               <Select
                 multiple
@@ -311,21 +587,36 @@ function ProductManagement() {
                     ? newProduct.image
                     : URL.createObjectURL(newProduct.image)
                 }
-                alt="Hình ảnh sản phẩm"
+                alt="Product preview"
               />
             </Card>
           )}
 
           <Button variant="contained" component="label">
             Chọn ảnh sản phẩm
-            <input type="file" hidden onChange={handleFileChange} />
+            <input
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={handleFileChange}
+            />
           </Button>
         </DialogContent>
 
         <DialogActions>
           <Button onClick={closeDialog}>Hủy</Button>
-          <Button variant="contained" onClick={handleSubmit}>
-            Thêm
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <CircularProgress size={24} />
+            ) : editMode ? (
+              "Cập nhật"
+            ) : (
+              "Thêm"
+            )}
           </Button>
         </DialogActions>
       </Dialog>

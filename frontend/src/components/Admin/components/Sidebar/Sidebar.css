@@ -1,21 +1,33 @@
 /* Sidebar CSS */
 .sidebar {
-    width: 240px; /* Giảm bớt độ rộng */
+    width: 240px;
     height: 100vh;
-    background-color: #222e3c; /* Màu nền sidebar */
+    background-color: #222e3c;
     color: white;
     display: flex;
     flex-direction: column;
     padding-top: 20px;
-  }
-  
-  .list-group {
+}
+
+.sidebar-header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.list-group {
     display: flex;
     flex-direction: column;
     gap: 10px;
-  }
-  
-  .list-group-item {
+}
+
+.list-group-item {
     padding: 12px 20px;
     font-size: 16px;
     border: none;
@@ -24,14 +36,29 @@
     text-align: left;
     cursor: pointer;
     transition: background 0.3s ease-in-out;
-  }
-  
-  .list-group-item:hover {
-    background: #3a4b63; /* Hiệu ứng hover */
-  }
-  
-  .list-group-item.active {
-    background-color: #007bff; /* Màu xanh của active */
+}
+
+.list-group-item:hover {
+    background: #3a4b63;
+}
+
+.list-group-item.active {
+    background-color: #007bff;
     font-weight: bold;
     border-radius: 5px;
-  }
+}
+
+.list-group-item i {
+    font-size: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+}
