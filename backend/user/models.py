@@ -10,6 +10,18 @@ class Customer(models.Model):
     email = models.EmailField(unique=True,blank=True,null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # New fields for POS
+    customer_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('REGULAR', 'Khách hàng thường xuyên'),
+            ('WALK_IN', 'Khách vãng lai'),
+        ],
+        default='WALK_IN'
+    )
+    total_purchases = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    last_purchase_date = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
     
     
     def __str__(self):
