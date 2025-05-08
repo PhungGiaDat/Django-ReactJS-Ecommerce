@@ -25,6 +25,7 @@ import {
   MenuItem,
   Snackbar,
   Alert as MuiAlert,
+  Grid,
 } from "@mui/material";
 import privateAPI from '../../../api/SecureAPI';
 
@@ -52,6 +53,20 @@ function POSPage() {
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [paymentError, setPaymentError] = useState("");
   const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
+  const [searchPhone, setSearchPhone] = useState('');
+  const [searchingCustomer, setSearchingCustomer] = useState(false);
+  const [foundCustomer, setFoundCustomer] = useState(null);
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [customerInfo, setCustomerInfo] = useState({
+    full_name: '',
+    phone_number: '',
+    email: '',
+    customer_type: 'WALK_IN',
+    district: '',
+    ward: '',
+    street: '',
+    city: ''
+  });
 
   useEffect(() => {
     fetchCategories();
@@ -151,32 +166,76 @@ function POSPage() {
     setError("");
     setPaymentError("");
     try {
-      // 1. Create order
+      // 1. Create or get customer
+      let customerRes;
+      try {
+        customerRes = await privateAPI.post("/api/customers/", {
+          full_name: customerInfo.full_name,
+          phone_number: customerInfo.phone_number,
+          email: customerInfo.email || null,
+          customer_type: customerInfo.customer_type,
+        });
+      } catch (e) {
+        // If customer already exists, try to get by phone number
+        const existingCustomer = await privateAPI.get(`/api/customers/search/?phone=${customerInfo.phone_number}`);
+        if (existingCustomer.data.length > 0) {
+          customerRes = { data: existingCustomer.data[0] };
+        } else {
+          throw e;
+        }
+      }
+
+      // 2. Create address if provided
+      if (customerInfo.street && customerInfo.district && customerInfo.ward && customerInfo.city) {
+        await privateAPI.post("/api/customers/address/", {
+          customer: customerRes.data.id,
+          street: customerInfo.street,
+          district: customerInfo.district,
+          ward: customerInfo.ward,
+          city: customerInfo.city,
+        });
+      }
+
+      // 3. Create order
       const orderRes = await privateAPI.post("/api/orders/", {
         order_type: "OFFLINE",
+        customer: customerRes.data.id,
         items: cart.map((item) => ({
           product: item.id,
           quantity: item.quantity,
           price_sold: Number(item.selling_price ?? item.price ?? 0),
         })),
       });
-      // 2. Create invoice
+
+      // 4. Create invoice
       await privateAPI.post("/api/payment/invoices/", {
         order: orderRes.data.order_id,
         amount_paid: amountPaid,
         payment_method: paymentMethod,
       });
+
       setOrderSummary({
         order: orderRes.data,
         cart,
         total: subtotal,
         paid: amountPaid,
+        customer: customerRes.data,
       });
       setCart([]);
       setStep(3);
       setPaymentSuccessOpen(true);
       setAmountPaid(0);
       setPaymentMethod('CASH');
+      setCustomerInfo({
+        full_name: '',
+        phone_number: '',
+        email: '',
+        customer_type: 'WALK_IN',
+        district: '',
+        ward: '',
+        street: '',
+        city: ''
+      });
     } catch (e) {
       setError("Thanh toán thất bại. Vui lòng thử lại.");
       setPaymentError("Thanh toán thất bại. Vui lòng thử lại.");
@@ -216,6 +275,65 @@ function POSPage() {
   const handleAddSuccessClose = (event, reason) => {
     if (reason === 'clickaway') return;
     setAddSuccessOpen(false);
+  };
+
+  // Add customer search function
+  const handleCustomerSearch = async () => {
+    if (!searchPhone) return;
+    setSearchingCustomer(true);
+    try {
+      const response = await privateAPI.get(`/api/customers/search/?phone=${searchPhone}`);
+      if (response.data.length > 0) {
+        const customer = response.data[0];
+        setFoundCustomer(customer);
+        setCustomerInfo({
+          full_name: customer.full_name,
+          phone_number: customer.phone_number,
+          email: customer.email || '',
+          customer_type: customer.customer_type,
+          district: '',
+          ward: '',
+          street: '',
+          city: ''
+        });
+        // If customer has address, load it
+        if (customer.address) {
+          setCustomerInfo(prev => ({
+            ...prev,
+            district: customer.address.district || '',
+            ward: customer.address.ward || '',
+            street: customer.address.street || '',
+            city: customer.address.city || ''
+          }));
+        }
+      } else {
+        setFoundCustomer(null);
+        setShowCustomerForm(true);
+        setCustomerInfo(prev => ({
+          ...prev,
+          phone_number: searchPhone
+        }));
+      }
+    } catch (error) {
+      setError("Lỗi khi tìm kiếm khách hàng");
+    }
+    setSearchingCustomer(false);
+  };
+
+  // Add function to handle new customer
+  const handleNewCustomer = () => {
+    setFoundCustomer(null);
+    setShowCustomerForm(true);
+    setCustomerInfo({
+      full_name: '',
+      phone_number: searchPhone,
+      email: '',
+      customer_type: 'WALK_IN',
+      district: '',
+      ward: '',
+      street: '',
+      city: ''
+    });
   };
 
   // UI
@@ -358,7 +476,10 @@ function POSPage() {
               <Button
                 variant="contained"
                 color="success"
-                onClick={() => setPaymentDialog(true)}
+                onClick={() => {
+                  setPaymentDialog(true);
+                  setStep(2);
+                }}
                 disabled={cart.length === 0}
               >
                 Thanh toán
@@ -368,43 +489,224 @@ function POSPage() {
         </Box>
       )}
       {step === 2 && (
-        <Dialog open={paymentDialog} onClose={() => setPaymentDialog(false)}>
-          <DialogTitle>Thanh toán</DialogTitle>
-          <DialogContent>
-            <Typography>Tổng tiền: {subtotal.toLocaleString()} đ</Typography>
-            <TextField
-              label="Số tiền khách trả"
-              type="number"
-              fullWidth
-              value={amountPaid}
-              onChange={(e) => setAmountPaid(Number(e.target.value))}
-              sx={{ mt: 2 }}
-            />
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Phương thức thanh toán</InputLabel>
-              <Select
-                value={paymentMethod}
-                label="Phương thức thanh toán"
-                onChange={e => setPaymentMethod(e.target.value)}
-              >
-                <MenuItem value="CASH">Tiền mặt</MenuItem>
-                <MenuItem value="CARD">Thẻ</MenuItem>
-                <MenuItem value="BANK_TRANSFER">Chuyển khoản</MenuItem>
-                <MenuItem value="E_WALLET">E-wallet</MenuItem>
-              </Select>
-            </FormControl>
+        <Dialog 
+          open={paymentDialog} 
+          onClose={() => setPaymentDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', pb: 2 }}>
+            <Typography variant="h6">Thanh toán đơn hàng</Typography>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h5" color="primary" sx={{ mb: 1 }}>
+                Tổng tiền: {subtotal.toLocaleString('en-US')} đ
+              </Typography>
+            </Box>
+
+            {/* Customer Search Section */}
+            {!foundCustomer && !showCustomerForm && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                  Tìm kiếm khách hàng
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <TextField
+                    label="Số điện thoại"
+                    fullWidth
+                    value={searchPhone}
+                    onChange={(e) => setSearchPhone(e.target.value)}
+                    disabled={searchingCustomer}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={handleCustomerSearch}
+                    disabled={!searchPhone || searchingCustomer}
+                  >
+                    {searchingCustomer ? 'Đang tìm...' : 'Tìm kiếm'}
+                  </Button>
+                </Box>
+                <Button
+                  variant="text"
+                  onClick={handleNewCustomer}
+                  sx={{ mt: 1 }}
+                >
+                  + Thêm khách hàng mới
+                </Button>
+              </Box>
+            )}
+
+            {/* Customer Information Section */}
+            {(foundCustomer || showCustomerForm) && (
+              <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                    Thông tin khách hàng
+                  </Typography>
+                  {foundCustomer && (
+                    <Button
+                      variant="text"
+                      onClick={handleNewCustomer}
+                      size="small"
+                    >
+                      Thay đổi
+                    </Button>
+                  )}
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Họ và tên"
+                      fullWidth
+                      value={customerInfo.full_name}
+                      onChange={(e) => setCustomerInfo({...customerInfo, full_name: e.target.value})}
+                      disabled={foundCustomer}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Số điện thoại"
+                      fullWidth
+                      value={customerInfo.phone_number}
+                      onChange={(e) => setCustomerInfo({...customerInfo, phone_number: e.target.value})}
+                      disabled={foundCustomer}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Email"
+                      fullWidth
+                      value={customerInfo.email}
+                      onChange={(e) => setCustomerInfo({...customerInfo, email: e.target.value})}
+                      disabled={foundCustomer}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Loại khách hàng</InputLabel>
+                      <Select
+                        value={customerInfo.customer_type}
+                        label="Loại khách hàng"
+                        onChange={(e) => setCustomerInfo({...customerInfo, customer_type: e.target.value})}
+                        disabled={foundCustomer}
+                      >
+                        <MenuItem value="WALK_IN">Khách vãng lai</MenuItem>
+                        <MenuItem value="REGULAR">Khách hàng thường xuyên</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+                      Địa chỉ
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Quận/Huyện"
+                      fullWidth
+                      value={customerInfo.district}
+                      onChange={(e) => setCustomerInfo({...customerInfo, district: e.target.value})}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Phường/Xã"
+                      fullWidth
+                      value={customerInfo.ward}
+                      onChange={(e) => setCustomerInfo({...customerInfo, ward: e.target.value})}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Đường"
+                      fullWidth
+                      value={customerInfo.street}
+                      onChange={(e) => setCustomerInfo({...customerInfo, street: e.target.value})}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Thành phố"
+                      fullWidth
+                      value={customerInfo.city}
+                      onChange={(e) => setCustomerInfo({...customerInfo, city: e.target.value})}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+            
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                label="Số tiền khách trả"
+                type="number"
+                fullWidth
+                value={amountPaid}
+                onChange={(e) => setAmountPaid(Number(e.target.value))}
+                InputProps={{
+                  startAdornment: <Typography sx={{ mr: 1 }}>đ</Typography>,
+                }}
+              />
+            </Box>
+
+            <Box sx={{ mb: 2 }}>
+              <FormControl fullWidth>
+                <InputLabel>Phương thức thanh toán</InputLabel>
+                <Select
+                  value={paymentMethod}
+                  label="Phương thức thanh toán"
+                  onChange={e => setPaymentMethod(e.target.value)}
+                >
+                  <MenuItem value="CASH">Tiền mặt</MenuItem>
+                  <MenuItem value="CARD">Thẻ</MenuItem>
+                  <MenuItem value="BANK_TRANSFER">Chuyển khoản</MenuItem>
+                  <MenuItem value="E_WALLET">E-wallet</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            {amountPaid > 0 && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                  Tiền thối: {(amountPaid - subtotal).toLocaleString('en-US')} đ
+                </Typography>
+              </Box>
+            )}
+
             {paymentError && (
               <MuiAlert severity="error" sx={{ mt: 2 }}>{paymentError}</MuiAlert>
             )}
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setPaymentDialog(false)}>Hủy</Button>
+          <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #e0e0e0' }}>
+            <Button 
+              onClick={() => {
+                setPaymentDialog(false);
+                setFoundCustomer(null);
+                setShowCustomerForm(false);
+                setSearchPhone('');
+                setCustomerInfo({
+                  full_name: '',
+                  phone_number: '',
+                  email: '',
+                  customer_type: 'WALK_IN',
+                  district: '',
+                  ward: '',
+                  street: '',
+                  city: ''
+                });
+              }}
+              variant="outlined"
+            >
+              Hủy
+            </Button>
             <Button
               variant="contained"
               color="success"
               onClick={handlePayment}
-              disabled={amountPaid < subtotal || !paymentMethod || loading}
+              disabled={amountPaid < subtotal || !paymentMethod || loading || !customerInfo.full_name || !customerInfo.phone_number}
               startIcon={loading ? <span className="MuiCircularProgress-root MuiCircularProgress-indeterminate" style={{ width: 20, height: 20, marginRight: 8 }} /> : null}
+              sx={{ minWidth: 150 }}
             >
               {loading ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
             </Button>
@@ -415,9 +717,9 @@ function POSPage() {
         <Box>
           <Typography variant="h5" color="success.main">Thanh toán thành công!</Typography>
           <Typography>Mã đơn hàng: {orderSummary.order.order_id}</Typography>
-          <Typography>Tổng tiền: {Number(orderSummary.total ?? 0).toLocaleString()} đ</Typography>
-          <Typography>Khách trả: {Number(orderSummary.paid ?? 0).toLocaleString()} đ</Typography>
-          <Typography>Tiền thừa: {Number((orderSummary.paid ?? 0) - (orderSummary.total ?? 0)).toLocaleString()} đ</Typography>
+          <Typography>Tổng tiền: {Number(orderSummary.total ?? 0).toLocaleString('en-US')} đ</Typography>
+          <Typography>Khách trả: {Number(orderSummary.paid ?? 0).toLocaleString('en-US')} đ</Typography>
+          <Typography>Tiền thừa: {Number((orderSummary.paid ?? 0) - (orderSummary.total ?? 0)).toLocaleString('en-US')} đ</Typography>
           <TableContainer component={Paper} sx={{ mt: 2 }}>
             <Table size="small">
               <TableHead>
@@ -433,8 +735,8 @@ function POSPage() {
                   <TableRow key={item.id}>
                     <TableCell>{item.name}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{Number(item.selling_price ?? item.price ?? 0).toLocaleString()} đ</TableCell>
-                    <TableCell>{(Number(item.selling_price ?? item.price ?? 0) * item.quantity).toLocaleString()} đ</TableCell>
+                    <TableCell>{Number(item.selling_price ?? item.price ?? 0).toLocaleString('en-US')} đ</TableCell>
+                    <TableCell>{(Number(item.selling_price ?? item.price ?? 0) * item.quantity).toLocaleString('en-US')} đ</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
