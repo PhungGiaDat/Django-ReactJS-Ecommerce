@@ -43,6 +43,7 @@ function POSPage() {
   const [loading, setLoading] = useState(false);
   const [paymentDialog, setPaymentDialog] = useState(false);
   const [amountPaid, setAmountPaid] = useState(0);
+  const [discountApplied, setDiscountApplied] = useState(0);
   const [orderSummary, setOrderSummary] = useState(null);
   const [error, setError] = useState("");
   const [categories, setCategories] = useState([]);
@@ -155,6 +156,13 @@ function POSPage() {
   };
 
   const subtotal = cart.reduce((sum, item) => sum + Number(item.selling_price ?? item.price ?? 0) * item.quantity, 0);
+  const discountAmount = (subtotal * discountApplied) / 100;
+  const totalAfterDiscount = subtotal - discountAmount;
+
+  // Format currency helper
+  const formatCurrency = (amount) => {
+    return Number(amount).toLocaleString('en-US') + ' đ';
+  };
 
   // Stepper logic
   const nextStep = () => setStep((s) => Math.min(s + 1, steps.length - 1));
@@ -212,12 +220,17 @@ function POSPage() {
         order: orderRes.data.order_id,
         amount_paid: amountPaid,
         payment_method: paymentMethod,
+        discount_applied: discountApplied,
+        final_price: totalAfterDiscount
       });
 
       setOrderSummary({
         order: orderRes.data,
         cart,
         total: subtotal,
+        discount: discountAmount,
+        discountPercentage: discountApplied,
+        totalAfterDiscount,
         paid: amountPaid,
         customer: customerRes.data,
       });
@@ -501,8 +514,53 @@ function POSPage() {
           <DialogContent sx={{ pt: 3 }}>
             <Box sx={{ mb: 3 }}>
               <Typography variant="h5" color="primary" sx={{ mb: 1 }}>
-                Tổng tiền: {subtotal.toLocaleString('en-US')} đ
+                Tổng tiền: {formatCurrency(subtotal)}
               </Typography>
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid item xs={6}>
+                  <TextField
+                    label="Giảm giá (%)"
+                    type="number"
+                    fullWidth
+                    value={discountApplied}
+                    onChange={(e) => {
+                      const value = Math.min(Math.max(Number(e.target.value), 0), 100);
+                      setDiscountApplied(value);
+                    }}
+                    InputProps={{
+                      endAdornment: <Typography>%</Typography>,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    label="Số tiền giảm"
+                    fullWidth
+                    value={formatCurrency(discountAmount)}
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                    sx={{ 
+                      '& .MuiInputBase-input': { 
+                        color: 'success.main',
+                        fontWeight: 'bold'
+                      }
+                    }}
+                  />
+                </Grid>
+              </Grid>
+              {discountApplied > 0 && (
+                <Box sx={{ 
+                  p: 2, 
+                  bgcolor: 'success.light', 
+                  borderRadius: 1,
+                  mb: 2
+                }}>
+                  <Typography variant="subtitle1" color="success.dark" sx={{ fontWeight: 'bold' }}>
+                    Sau giảm giá: {formatCurrency(totalAfterDiscount)}
+                  </Typography>
+                </Box>
+              )}
             </Box>
 
             {/* Customer Search Section */}
@@ -638,38 +696,38 @@ function POSPage() {
             )}
             
             <Box sx={{ mb: 3 }}>
-              <TextField
-                label="Số tiền khách trả"
-                type="number"
-                fullWidth
-                value={amountPaid}
-                onChange={(e) => setAmountPaid(Number(e.target.value))}
+            <TextField
+              label="Số tiền khách trả"
+              type="number"
+              fullWidth
+              value={amountPaid}
+              onChange={(e) => setAmountPaid(Number(e.target.value))}
                 InputProps={{
                   startAdornment: <Typography sx={{ mr: 1 }}>đ</Typography>,
                 }}
-              />
+            />
             </Box>
 
             <Box sx={{ mb: 2 }}>
               <FormControl fullWidth>
-                <InputLabel>Phương thức thanh toán</InputLabel>
-                <Select
-                  value={paymentMethod}
-                  label="Phương thức thanh toán"
-                  onChange={e => setPaymentMethod(e.target.value)}
-                >
-                  <MenuItem value="CASH">Tiền mặt</MenuItem>
-                  <MenuItem value="CARD">Thẻ</MenuItem>
-                  <MenuItem value="BANK_TRANSFER">Chuyển khoản</MenuItem>
-                  <MenuItem value="E_WALLET">E-wallet</MenuItem>
-                </Select>
-              </FormControl>
+              <InputLabel>Phương thức thanh toán</InputLabel>
+              <Select
+                value={paymentMethod}
+                label="Phương thức thanh toán"
+                onChange={e => setPaymentMethod(e.target.value)}
+              >
+                <MenuItem value="CASH">Tiền mặt</MenuItem>
+                <MenuItem value="CARD">Thẻ</MenuItem>
+                <MenuItem value="BANK_TRANSFER">Chuyển khoản</MenuItem>
+                <MenuItem value="E_WALLET">E-wallet</MenuItem>
+              </Select>
+            </FormControl>
             </Box>
 
             {amountPaid > 0 && (
               <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
                 <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                  Tiền thối: {(amountPaid - subtotal).toLocaleString('en-US')} đ
+                  Tiền thối: {formatCurrency(amountPaid - totalAfterDiscount)}
                 </Typography>
               </Box>
             )}
@@ -704,7 +762,7 @@ function POSPage() {
               variant="contained"
               color="success"
               onClick={handlePayment}
-              disabled={amountPaid < subtotal || !paymentMethod || loading || !customerInfo.full_name || !customerInfo.phone_number}
+              disabled={amountPaid < totalAfterDiscount || !paymentMethod || loading || !customerInfo.full_name || !customerInfo.phone_number}
               startIcon={loading ? <span className="MuiCircularProgress-root MuiCircularProgress-indeterminate" style={{ width: 20, height: 20, marginRight: 8 }} /> : null}
               sx={{ minWidth: 150 }}
             >
@@ -717,9 +775,19 @@ function POSPage() {
         <Box>
           <Typography variant="h5" color="success.main">Thanh toán thành công!</Typography>
           <Typography>Mã đơn hàng: {orderSummary.order.order_id}</Typography>
-          <Typography>Tổng tiền: {Number(orderSummary.total ?? 0).toLocaleString('en-US')} đ</Typography>
-          <Typography>Khách trả: {Number(orderSummary.paid ?? 0).toLocaleString('en-US')} đ</Typography>
-          <Typography>Tiền thừa: {Number((orderSummary.paid ?? 0) - (orderSummary.total ?? 0)).toLocaleString('en-US')} đ</Typography>
+          <Typography>Tổng tiền: {formatCurrency(orderSummary.total)}</Typography>
+          {orderSummary.discount > 0 && (
+            <>
+              <Typography color="success.main">
+                Giảm giá ({orderSummary.discountPercentage}%): {formatCurrency(orderSummary.discount)}
+              </Typography>
+              <Typography variant="h6">
+                Thành tiền: {formatCurrency(orderSummary.totalAfterDiscount)}
+              </Typography>
+            </>
+          )}
+          <Typography>Khách trả: {formatCurrency(orderSummary.paid)}</Typography>
+          <Typography>Tiền thừa: {formatCurrency(orderSummary.paid - orderSummary.totalAfterDiscount)}</Typography>
           <TableContainer component={Paper} sx={{ mt: 2 }}>
             <Table size="small">
               <TableHead>
