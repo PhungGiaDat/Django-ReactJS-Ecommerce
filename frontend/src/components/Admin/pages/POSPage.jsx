@@ -177,7 +177,7 @@ function POSPage() {
       // 1. Create or get customer
       let customerRes;
       try {
-        customerRes = await privateAPI.post("/api/customers/", {
+        customerRes = await privateAPI.post("/api/user/customers/create/", {
           full_name: customerInfo.full_name,
           phone_number: customerInfo.phone_number,
           email: customerInfo.email || null,
@@ -185,7 +185,7 @@ function POSPage() {
         });
       } catch (e) {
         // If customer already exists, try to get by phone number
-        const existingCustomer = await privateAPI.get(`/api/customers/search/?phone=${customerInfo.phone_number}`);
+        const existingCustomer = await privateAPI.get(`/api/user/customers/search/?q=${customerInfo.phone_number}`);
         if (existingCustomer.data.length > 0) {
           customerRes = { data: existingCustomer.data[0] };
         } else {
@@ -195,7 +195,7 @@ function POSPage() {
 
       // 2. Create address if provided
       if (customerInfo.street && customerInfo.district && customerInfo.ward && customerInfo.city) {
-        await privateAPI.post("/api/customers/address/", {
+        await privateAPI.post("/api/user/customers/address/", {
           customer: customerRes.data.id,
           street: customerInfo.street,
           district: customerInfo.district,
@@ -205,8 +205,7 @@ function POSPage() {
       }
 
       // 3. Create order
-      const orderRes = await privateAPI.post("/api/orders/", {
-        order_type: "OFFLINE",
+      const orderRes = await privateAPI.post("/api/pos/orders/", {
         customer: customerRes.data.id,
         items: cart.map((item) => ({
           product: item.id,
@@ -216,7 +215,7 @@ function POSPage() {
       });
 
       // 4. Create invoice
-      await privateAPI.post("/api/payment/invoices/", {
+      const invoiceRes = await privateAPI.post("/api/payment/pos/invoices/create/", {
         order: orderRes.data.order_id,
         amount_paid: amountPaid,
         payment_method: paymentMethod,
@@ -233,6 +232,7 @@ function POSPage() {
         totalAfterDiscount,
         paid: amountPaid,
         customer: customerRes.data,
+        invoice: invoiceRes.data
       });
       setCart([]);
       setStep(3);
